@@ -1,0 +1,219 @@
+import 'package:flutter/material.dart';
+
+import '../../../database/database.dart';
+import '../hora_utils.dart';
+
+const horaInicioGrid = 7;
+const horaFinGrid = 21;
+const pxPorMinuto = 1.2;
+
+const diasGrid = [
+  DiaSemana.lunes,
+  DiaSemana.martes,
+  DiaSemana.miercoles,
+  DiaSemana.jueves,
+  DiaSemana.viernes,
+  DiaSemana.sabado,
+];
+
+class HorarioGrid extends StatelessWidget {
+  final List<MateriaConBloques> materias;
+  final void Function(Materia materia, HorarioBloque bloque) onTapBloque;
+
+  const HorarioGrid({super.key, required this.materias, required this.onTapBloque});
+
+  double get _alturaTotal => (horaFinGrid - horaInicioGrid) * 60 * pxPorMinuto;
+
+  @override
+  Widget build(BuildContext context) {
+    final ahora = DateTime.now();
+    final diaHoy = DiaSemana.values[ahora.weekday - 1];
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            const SizedBox(width: 44),
+            ...List.generate(diasGrid.length, (i) {
+              final esHoy = diasGrid[i] == diaHoy;
+              return Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  alignment: Alignment.center,
+                  color: esHoy ? Theme.of(context).colorScheme.primaryContainer : null,
+                  child: Text(
+                    nombresDiaCorto[i],
+                    style: TextStyle(fontWeight: esHoy ? FontWeight.bold : FontWeight.normal),
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            child: SizedBox(
+              height: _alturaTotal,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _ColumnaHoras(alturaTotal: _alturaTotal),
+                  ...List.generate(
+                    diasGrid.length,
+                    (i) => Expanded(
+                      child: _ColumnaDia(
+                        dia: diasGrid[i],
+                        esHoy: diasGrid[i] == diaHoy,
+                        ahora: ahora,
+                        materias: materias,
+                        onTapBloque: onTapBloque,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ColumnaHoras extends StatelessWidget {
+  final double alturaTotal;
+
+  const _ColumnaHoras({required this.alturaTotal});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 44,
+      height: alturaTotal,
+      child: Stack(
+        children: List.generate(horaFinGrid - horaInicioGrid + 1, (i) {
+          final hora = horaInicioGrid + i;
+          return Positioned(
+            top: i * 60 * pxPorMinuto - 8,
+            right: 4,
+            child: Text(
+              '$hora:00',
+              style: const TextStyle(fontSize: 11, color: Colors.grey),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _ColumnaDia extends StatelessWidget {
+  final DiaSemana dia;
+  final bool esHoy;
+  final DateTime ahora;
+  final List<MateriaConBloques> materias;
+  final void Function(Materia materia, HorarioBloque bloque) onTapBloque;
+
+  const _ColumnaDia({
+    required this.dia,
+    required this.esHoy,
+    required this.ahora,
+    required this.materias,
+    required this.onTapBloque,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bloquesDelDia = <(Materia, HorarioBloque)>[];
+    for (final m in materias) {
+      for (final b in m.bloques) {
+        if (b.diaSemana == dia) bloquesDelDia.add((m.materia, b));
+      }
+    }
+    final minutosAhora = ahora.hour * 60 + ahora.minute;
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(left: BorderSide(color: Theme.of(context).dividerColor)),
+        color: esHoy
+            ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.08)
+            : null,
+      ),
+      child: Stack(
+        children: [
+          for (var i = 0; i <= horaFinGrid - horaInicioGrid; i++)
+            Positioned(
+              top: i * 60 * pxPorMinuto,
+              left: 0,
+              right: 0,
+              child: Divider(
+                height: 1,
+                thickness: 0.5,
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
+              ),
+            ),
+          for (final (materia, bloque) in bloquesDelDia)
+            Positioned(
+              top: (bloque.horaInicioMinutos - horaInicioGrid * 60) * pxPorMinuto,
+              left: 2,
+              right: 2,
+              height: (bloque.horaFinMinutos - bloque.horaInicioMinutos) * pxPorMinuto,
+              child: _BloqueClase(
+                materia: materia,
+                bloque: bloque,
+                onTap: () => onTapBloque(materia, bloque),
+              ),
+            ),
+          if (esHoy && minutosAhora >= horaInicioGrid * 60 && minutosAhora <= horaFinGrid * 60)
+            Positioned(
+              top: (minutosAhora - horaInicioGrid * 60) * pxPorMinuto,
+              left: 0,
+              right: 0,
+              child: Container(height: 2, color: Colors.red),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BloqueClase extends StatelessWidget {
+  final Materia materia;
+  final HorarioBloque bloque;
+  final VoidCallback onTap;
+
+  const _BloqueClase({required this.materia, required this.bloque, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.secondaryContainer,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        padding: const EdgeInsets.all(4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              materia.nombre,
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (materia.aula.isNotEmpty)
+              Text(
+                materia.aula,
+                style: const TextStyle(fontSize: 10),
+                overflow: TextOverflow.ellipsis,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
