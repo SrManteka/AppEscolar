@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 
 import '../../../database/database.dart';
+import '../../notas/notas_screen.dart';
 import '../hora_utils.dart';
 
 Future<void> mostrarDetalleMateria({
@@ -173,6 +174,22 @@ class _MateriaDetailSheetState extends State<_MateriaDetailSheet> {
                   ),
                   if (materia.maestro.isNotEmpty) Text(materia.maestro),
                   if (materia.aula.isNotEmpty) Text('Aula ${materia.aula}'),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.tonalIcon(
+                      icon: const Icon(Icons.note_alt_outlined),
+                      label: const Text('Ver notas'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => NotasScreen(db: widget.db, materia: materia),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   Text('Horarios', style: Theme.of(context).textTheme.labelLarge),
                   StreamBuilder<List<HorarioBloque>>(

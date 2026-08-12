@@ -7,6 +7,8 @@ part 'database.g.dart';
 
 enum DiaSemana { lunes, martes, miercoles, jueves, viernes, sabado, domingo }
 
+enum EtiquetaNota { examen, duda, tareaMencionada }
+
 class Semestres extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get nombre => text()();
@@ -30,7 +32,18 @@ class HorarioBloques extends Table {
   IntColumn get horaFinMinutos => integer()();
 }
 
-@DriftDatabase(tables: [Semestres, Materias, HorarioBloques])
+class Notas extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get materiaId =>
+      integer().references(Materias, #id, onDelete: KeyAction.cascade)();
+  TextColumn get titulo => text()();
+  TextColumn get texto => text().withDefault(const Constant(''))();
+  IntColumn get etiqueta => intEnum<EtiquetaNota>().nullable()();
+  DateTimeColumn get fechaDestacada => dateTime().nullable()();
+  DateTimeColumn get creadaEn => dateTime().withDefault(currentDateAndTime)();
+}
+
+@DriftDatabase(tables: [Semestres, Materias, HorarioBloques, Notas])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -38,7 +51,24 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.createTable(notas);
+      }
+    },
+  );
+
+  Stream<List<Nota>> watchNotas(int materiaId) {
+    final query = select(notas)
+      ..where((n) => n.materiaId.equals(materiaId))
+      ..orderBy([(n) => OrderingTerm.desc(n.creadaEn)]);
+    return query.watch();
+  }
 
   Future<int> semestreActivoId() async {
     final existente = await (select(
