@@ -43,7 +43,21 @@ class Notas extends Table {
   DateTimeColumn get creadaEn => dateTime().withDefault(currentDateAndTime)();
 }
 
-@DriftDatabase(tables: [Semestres, Materias, HorarioBloques, Notas])
+class Tareas extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get materiaId =>
+      integer().references(Materias, #id, onDelete: KeyAction.cascade)();
+  // Solo fecha (sin hora) a proposito: capturar hora de entrega es
+  // impredecible y no aporta. Se guarda con hora en 00:00.
+  DateTimeColumn get fechaEntrega => dateTime()();
+  // Se llena si la tarea se creo con "convertir en tarea" desde una nota
+  // "tarea mencionada". Si la nota origen se borra, la tarea sobrevive
+  // (Teams sigue siendo la fuente de verdad de la entrega).
+  IntColumn get notaOrigenId =>
+      integer().nullable().references(Notas, #id, onDelete: KeyAction.setNull)();
+}
+
+@DriftDatabase(tables: [Semestres, Materias, HorarioBloques, Notas, Tareas])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -51,7 +65,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -60,6 +74,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 2) {
         await m.createTable(notas);
       }
+      if (from < 3) {
+        await m.createTable(tareas);
+      }
     },
   );
 
@@ -67,6 +84,13 @@ class AppDatabase extends _$AppDatabase {
     final query = select(notas)
       ..where((n) => n.materiaId.equals(materiaId))
       ..orderBy([(n) => OrderingTerm.desc(n.creadaEn)]);
+    return query.watch();
+  }
+
+  Stream<List<Tarea>> watchTareas(int materiaId) {
+    final query = select(tareas)
+      ..where((t) => t.materiaId.equals(materiaId))
+      ..orderBy([(t) => OrderingTerm.asc(t.fechaEntrega)]);
     return query.watch();
   }
 

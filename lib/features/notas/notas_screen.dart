@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 
 import '../../database/database.dart';
+import '../tareas/widgets/tarea_form_sheet.dart';
 import 'etiqueta_utils.dart';
 import 'widgets/nota_card.dart';
 import 'widgets/nota_form_sheet.dart';
@@ -27,6 +28,16 @@ class NotasScreen extends StatelessWidget {
     if (confirmar == true) {
       await (db.delete(db.notas)..whereSamePrimaryKey(nota)).go();
     }
+  }
+
+  void _convertirEnTarea(BuildContext context, Nota nota) {
+    mostrarFormularioTarea(
+      context: context,
+      db: db,
+      materiaId: nota.materiaId,
+      fechaInicial: nota.fechaDestacada,
+      notaOrigenId: nota.id,
+    );
   }
 
   @override
@@ -78,6 +89,9 @@ class NotasScreen extends StatelessWidget {
                         notaExistente: nota,
                       ),
                       onEliminar: () => _eliminarNota(context, nota),
+                      onConvertirEnTarea: nota.etiqueta == EtiquetaNota.tareaMencionada
+                          ? () => _convertirEnTarea(context, nota)
+                          : null,
                     );
                   },
                 );

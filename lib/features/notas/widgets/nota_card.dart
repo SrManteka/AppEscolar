@@ -7,12 +7,14 @@ class NotaCard extends StatelessWidget {
   final Nota nota;
   final VoidCallback onTap;
   final VoidCallback onEliminar;
+  final VoidCallback? onConvertirEnTarea;
 
   const NotaCard({
     super.key,
     required this.nota,
     required this.onTap,
     required this.onEliminar,
+    this.onConvertirEnTarea,
   });
 
   @override
@@ -54,9 +56,20 @@ class NotaCard extends StatelessWidget {
           ],
         ),
         isThreeLine: nota.texto.isNotEmpty,
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline),
-          onPressed: onEliminar,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (onConvertirEnTarea != null)
+              IconButton(
+                icon: const Icon(Icons.playlist_add_check_outlined),
+                tooltip: 'Convertir en tarea',
+                onPressed: onConvertirEnTarea,
+              ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: onEliminar,
+            ),
+          ],
         ),
       ),
     );
