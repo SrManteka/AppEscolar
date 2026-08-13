@@ -61,6 +61,14 @@ El usuario tiene iPhone propio (primer probador) y planea compartir con amigos (
 
 Los artifacts se descargan desde la página del run en GitHub Actions (o vía `gh run download`) — de ahí el `.ipa` va a SideStore en el iPhone, el `.apk` se manda directo a cualquier Android.
 
+## Nombre e ícono de la app (2026-08-13)
+
+**El nombre visible en los dispositivos es "NotesFS" — el repo (`AppEscolar`) y el nombre del paquete (`app_escolar` en `pubspec.yaml`) no cambian.** Son cosas distintas a propósito: el repo es donde vive el código y es lo que se muestra como evidencia de portafolio; "NotesFS" es solo lo que aparece bajo el ícono en el celular. Cambiar el nombre del paquete habría sido un cambio más invasivo (afecta identificadores internos de Android/iOS) sin necesidad real — el objetivo era solo la etiqueta visible.
+
+Cambiado en: `android:label` (`AndroidManifest.xml`), `CFBundleDisplayName`/`CFBundleName` (`Info.plist`), y el `title` de `MaterialApp` en `main.dart` (afecta el selector de apps recientes en Android). También el título de la ventana en Windows (`windows/runner/main.cpp`) — cosmético, Windows no es plataforma de distribución.
+
+**Ícono:** generado como lettermark minimalista estilo Notion (fondo oscuro sólido, letra bold) — "N" grande + "fs" en minúsculas como calificador, no una copia literal del ícono de Notion, sino el mismo género de diseño (letra única, alto contraste, sin degradados). Fuente: `assets/icon/app_icon.png` (1024×1024). Se generan los assets reales de cada plataforma con `flutter_launcher_icons` (`dart run flutter_launcher_icons` tras `flutter pub get`) — no se generaron a mano los distintos tamaños de Android/iOS, ese paquete resuelve eso a partir de la única imagen fuente.
+
 ## Por qué el modelo de datos quedó así
 
 - **Una sola estructura de nota, no un sistema por plantilla.** Las plantillas rápidas ("examen", "duda", "tarea") son una nota limpia con campos pre-llenados (etiqueta + fecha_destacada opcional), no un tipo de dato distinto — evita construir un sistema paralelo por cada plantilla.

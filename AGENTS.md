@@ -60,6 +60,10 @@ Ver `docs/diseno.md` — sistema de color (`ColorScheme.fromSeed()`, Material 3,
 
 **Pipeline de distribución implementado** — `.github/workflows/build.yml` (manual, `workflow_dispatch`): job `android` compila `.apk`, job `ios-sin-firmar` compila `.ipa` sin firmar (`macos-latest`, gratis por ser repo público). Ver `docs/decisiones.md`, "Pipeline implementado", para el detalle de cada paso.
 
-**Siguiente paso:** correr el pipeline por primera vez, bajar los artifacts, e instalar — `.apk` directo en Android, `.ipa` vía SideStore en iPhone. El tutorial de instalación para amigos con SideStore sigue sin escribirse.
+**Nombre e ícono configurados** — la app se llama "NotesFS" en los dispositivos (el repo y el nombre del paquete `app_escolar` NO cambiaron, es solo la etiqueta visible). Ícono fuente en `assets/icon/app_icon.png`, falta correr `dart run flutter_launcher_icons` (después de `flutter pub get`) para generar los assets reales de Android/iOS — ver `docs/decisiones.md`, "Nombre e ícono de la app".
+
+**Bloqueado:** la primera corrida del pipeline falló — la cuenta de GitHub tiene un bloqueo de facturación ("account is locked due to a billing issue"), nada que ver con el `build.yml`. Pendiente de que el usuario lo resuelva en https://github.com/settings/billing antes de poder correr el pipeline de verdad.
+
+**Siguiente paso, en orden:** (1) correr `dart run flutter_launcher_icons` para generar los íconos reales, (2) una vez destrabada la cuenta, correr el pipeline y bajar los artifacts, (3) instalar — `.apk` directo en Android, `.ipa` vía SideStore en iPhone. El tutorial de instalación para amigos con SideStore sigue sin escribirse.
 
 <!-- TODO: actualizar esta sección conforme avance -->

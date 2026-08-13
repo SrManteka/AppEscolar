@@ -58,6 +58,20 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   drift_dev: ^2.34.5
   build_runner: ^2.15.1
+  # Genera los iconos de Android/iOS en todas las resoluciones a partir de
+  # assets/icon/app_icon.png -- correr `dart run flutter_launcher_icons`
+  # despues de `flutter pub get`. Ver docs/decisiones.md, "Nombre e icono
+  # de la app".
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  # El icono ya trae su propio fondo (cuadrado, negro) -- Android/iOS lo
+  # recortan/redondean solos, no hace falta pre-redondear ni dejar
+  # transparencia.
+  remove_alpha_ios: true
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

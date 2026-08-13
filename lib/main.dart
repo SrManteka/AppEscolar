@@ -77,7 +77,7 @@ class _AppEscolarState extends State<AppEscolar> {
       listenable: widget.settings,
       builder: (context, _) {
         return MaterialApp(
-          title: 'AppEscolar',
+          title: 'NotesFS',
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: widget.settings.seedColor),
             textTheme: GoogleFonts.poppinsTextTheme(),
