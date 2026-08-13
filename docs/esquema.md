@@ -15,7 +15,7 @@ Motor: **SQLite local** (`sqflite`/`drift` en Flutter). Fotos como **archivos en
 | Campo | Tipo | Notas |
 |---|---|---|
 | id | PK | |
-| semestre_id | FK → semestre | |
+| semestre_id | FK → semestre | **Sin `onDelete: cascade` todavía** — borrar un semestre con materias asociadas requiere agregarlo, o borrar las materias manualmente primero (ver `decisiones.md`, "Pendientes organizados tras terminar fase 2"). |
 | nombre | texto | |
 | maestro | texto | |
 | aula | texto | |

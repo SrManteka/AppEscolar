@@ -54,8 +54,15 @@ Ver `docs/diseno.md` — sistema de color (`ColorScheme.fromSeed()`, Material 3,
 
 ## Estado actual
 
-**MVP prioridades 1-4 construidas:** Horario y clases, Notas de clase, Tareas, Calendario + Recordatorios — con sistema de color y pulido visual de Horario ya implementados. Ver `git log` para el detalle de cada feature.
+**MVP completo: prioridades 1-5 construidas** — Horario y clases, Notas de clase, Tareas, Calendario + Recordatorios, Proyectos + Fotos. Sistema de color, tipografía (`google_fonts`) y pulido visual de Horario implementados. Ver `git log` para el detalle de cada feature.
 
-**Siguiente paso: fase 2 — Proyectos y Fotos** (prioridad 5, no bloqueaban el MVP). Antes de construirlas se revisó su especificación contra lo aprendido en fase 1 — ver `docs/decisiones.md`, "Ajustes a fase 2": `hito` ahora incluye `texto` opcional (igual que `tarea`), y quedó explícito que "convertir en tarea" no migra fotos automáticamente. Ninguna de las dos tiene tablas ni features en código todavía — arrancan desde cero, igual que las anteriores.
+**Siguiente paso: cuatro pendientes organizados, ninguno construido todavía** — ver `docs/decisiones.md`, "Pendientes organizados tras terminar fase 2", para el detalle completo de cada uno:
+
+1. Gestión manual de semestres (pantalla "Semestres": nuevo/archivar, exportar JSON, borrar — incluye un ajuste de esquema pendiente, `onDelete: cascade` en `materias.semestreId`).
+2. Búsqueda/filtro de notas por texto dentro de una materia.
+3. Separación visual entre el AppBar y el cuerpo en Horario.
+4. Márgenes en la cuadrícula de Horario (sin reducir tamaños).
+
+**Después de estos cuatro:** pipeline de distribución (GitHub Actions para el `.ipa` sin firmar) y el tutorial de instalación para amigos — ver "Distribución (sin Mac, sin pagar)" arriba.
 
 <!-- TODO: actualizar esta sección conforme avance la construcción de fase 2 -->

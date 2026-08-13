@@ -93,6 +93,18 @@ Revisión de las especificaciones de Proyectos y Fotos contra lo aprendido const
 
 Con esto, `titulo` es consistente en las tres entidades "nombrables" del modelo (`nota`, `tarea`, `hito`) — todas lo requieren, ninguna se quedó corta respecto a las demás.
 
+## Pendientes organizados tras terminar fase 2 (2026-08-12) — todavía sin construir
+
+Revisión de qué quedó decidido pero nunca se implementó, antes de seguir con el pipeline de distribución. Ninguno de estos cuatro tiene código todavía; quedan como spec para la siguiente sesión de construcción.
+
+**Gestión manual de semestres** (`materias.semestre_id`, `semestres.activo` — ya existen en el esquema, sin UI): pantalla/sección "Semestres" con el activo destacado y los archivados debajo. "Nuevo semestre" archiva el actual (`activo = false`) y crea/activa uno nuevo, sin tocar los datos del anterior. Por semestre archivado: **Exportar** (JSON con materias/horario/notas/tareas/proyectos/hitos de ese semestre — no incluye archivos de fotos, solo sus rutas como metadata; respaldo completo de imágenes es alcance mayor, evaluar después si hace falta) y **Borrar** (con confirmación). **Detalle técnico real:** `materias.semestreId` no tiene `onDelete: cascade` hacia `semestres` — hay que agregarlo, o borrar materias manualmente antes de borrar el semestre (desde ahí sí cascada correctamente hacia notas/tareas/proyectos/fotos, eso ya está declarado).
+
+**Búsqueda/filtro de notas** (decisión original, nunca construida): "por materia" ya está resuelto estructuralmente (se navega a una materia, se ven solo sus notas) — no hace falta filtro adicional para eso. "Por texto": ícono de búsqueda en el AppBar de `NotasScreen` que filtra la lista visible (título + texto) en tiempo real, dentro de la materia actual. Búsqueda global cruzando materias no fue lo pedido, queda fuera de alcance salvo que se pida explícitamente después.
+
+**Separación visual app bar/cuerpo en Horario** (quedó pendiente del pulido visual del 2026-08-12, nunca se retomó): el AppBar se funde con el cuerpo, mismo tono de superficie. Propuesta: `backgroundColor` del AppBar a `colorScheme.surfaceContainer` (o elevación sutil).
+
+**Márgenes en la cuadrícula de Horario:** a pedido del usuario, la vista se siente "pegada a los bordes" de la pantalla. Propuesta: padding horizontal (12-16px aprox.) envolviendo la cuadrícula y el header de días, **sin reducir tamaños de fuente ni de los bloques de clase** — solo separar del borde, no achicar el contenido.
+
 ## Deadline y prioridad del MVP
 
 Ver `AGENTS.md` para el orden de prioridad completo. Razonamiento: 12 días (definido el 2026-08-09, deadline 24 de agosto) es un plazo real de riesgo para construir las 5 features completas desde cero, solo, con apoyo de IA. En vez de fijar "100% para el 24" como meta rígida (con riesgo de terminar apurado justo el día que más se necesita estable), se definió un MVP con orden de prioridad claro — Fotos y Proyectos quedan en fase 2 sin que eso cuente como no cumplir la meta.
