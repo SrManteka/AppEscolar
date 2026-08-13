@@ -45,6 +45,8 @@ Ver `docs/diseno.md` — sistema de color (`ColorScheme.fromSeed()`, Material 3,
 2. Instalar con **SideStore** (Apple ID gratis, setup inicial en cualquier compu — Windows, Mac, Linux o Chromebook).
 3. Android: `.apk` directo, sin fricción.
 4. Detalle completo y razonamiento en `docs/decisiones.md`.
+5. **Runbook mecánico (correr el pipeline y compartir):** `docs/publicar-nueva-version.md`.
+6. **Tutorial para amigos (Android + iPhone/SideStore):** `docs/instalacion.md`.
 
 ## Convenciones
 
@@ -62,8 +64,10 @@ Ver `docs/diseno.md` — sistema de color (`ColorScheme.fromSeed()`, Material 3,
 
 **Nombre e ícono configurados** — la app se llama "NotesFS" en los dispositivos (el repo y el nombre del paquete `app_escolar` NO cambiaron, es solo la etiqueta visible). Ícono fuente en `assets/icon/app_icon.png`, falta correr `dart run flutter_launcher_icons` (después de `flutter pub get`) para generar los assets reales de Android/iOS — ver `docs/decisiones.md`, "Nombre e ícono de la app".
 
-**Bloqueado:** la primera corrida del pipeline falló — la cuenta de GitHub tiene un bloqueo de facturación ("account is locked due to a billing issue"), nada que ver con el `build.yml`. Pendiente de que el usuario lo resuelva en https://github.com/settings/billing antes de poder correr el pipeline de verdad.
+**Ya no bloqueado:** el bloqueo de facturación de la cuenta de GitHub se resolvió el 2026-08-13 — el pipeline corre normal.
 
-**Siguiente paso, en orden:** (1) correr `dart run flutter_launcher_icons` para generar los íconos reales, (2) una vez destrabada la cuenta, correr el pipeline y bajar los artifacts, (3) instalar — `.apk` directo en Android, `.ipa` vía SideStore en iPhone. El tutorial de instalación para amigos con SideStore sigue sin escribirse.
+**Tutoriales escritos:** `docs/publicar-nueva-version.md` (runbook mecánico de cómo sacar una build y compartirla) y `docs/instalacion.md` (guía para amigos, Android + iPhone/SideStore, sin tecnicismos).
+
+**Siguiente paso, en orden:** (1) correr `dart run flutter_launcher_icons` para generar los íconos reales (pendiente, requiere Flutter local), (2) bajar los artifacts de la corrida más reciente del pipeline, (3) instalar y probar en dispositivos reales siguiendo `docs/instalacion.md`.
 
 <!-- TODO: actualizar esta sección conforme avance -->
