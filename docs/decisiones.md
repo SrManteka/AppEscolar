@@ -61,6 +61,8 @@ El usuario tiene iPhone propio (primer probador) y planea compartir con amigos (
 
 Los artifacts se descargan desde la página del run en GitHub Actions (o vía `gh run download`) — de ahí el `.ipa` va a SideStore en el iPhone, el `.apk` se manda directo a cualquier Android.
 
+**Primera corrida real (2026-08-13): iOS pasó, Android falló.** `flutter build apk --release` falló en `:app:checkReleaseAarMetadata` — `flutter_local_notifications` requiere "core library desugaring" habilitado, y `android/app/build.gradle.kts` no lo tenía. Nunca se había detectado antes porque el desarrollo local solo corrió `flutter run -d windows` — el pipeline fue la primera vez que se ejercitó de verdad el build de release de Android. Arreglado agregando `isCoreLibraryDesugaringEnabled = true` en `compileOptions` y la dependencia `coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")`.
+
 ## Nombre e ícono de la app (2026-08-13)
 
 **El nombre visible en los dispositivos es "NotesFS" — el repo (`AppEscolar`) y el nombre del paquete (`app_escolar` en `pubspec.yaml`) no cambian.** Son cosas distintas a propósito: el repo es donde vive el código y es lo que se muestra como evidencia de portafolio; "NotesFS" es solo lo que aparece bajo el ícono en el celular. Cambiar el nombre del paquete habría sido un cambio más invasivo (afecta identificadores internos de Android/iOS) sin necesidad real — el objetivo era solo la etiqueta visible.
