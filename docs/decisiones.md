@@ -48,6 +48,19 @@ El usuario tiene iPhone propio (primer probador) y planea compartir con amigos (
 5. Android: sin fricción — `.apk` directo, "instalar de orígenes desconocidos".
 6. **Apple Developer Program (~$99 USD/año) solo sería necesario** si algún día se quiere publicar en la App Store, o si la distribución a amigos vía SideStore se vuelve demasiada fricción en la práctica (fallback: TestFlight, instalación de un tap). No es necesario para arrancar.
 
+## Pipeline implementado (2026-08-13)
+
+`.github/workflows/build.yml` — dos jobs, ambos manuales (`workflow_dispatch`, no en cada push):
+
+- **`android`** (`ubuntu-latest`): `flutter build apk --release`, sube el `.apk` como artifact. Corre `flutter test` antes de compilar, como chequeo rápido.
+- **`ios-sin-firmar`** (`macos-latest`): `flutter build ios --release --no-codesign`, luego empaqueta manualmente `Runner.app` en un `.ipa` (zip de una carpeta `Payload/` con el `.app` adentro — así es literalmente el formato `.ipa`, `flutter build ios` no lo genera solo). Sube el `.ipa` sin firmar como artifact.
+
+**Por qué manual y no en cada push:** el job de iOS corre en una máquina macOS — gratis e ilimitado por ser repo público, pero sin sentido gastarlo en cada commit mientras se sigue iterando. Se dispara desde la pestaña Actions cuando de verdad se quiere una build nueva para instalar o compartir.
+
+**Ambos jobs corren `dart run build_runner build --delete-conflicting-outputs` antes de compilar** — `database.g.dart` está en `.gitignore` (es código generado), sin este paso el build falla por falta del archivo `part`.
+
+Los artifacts se descargan desde la página del run en GitHub Actions (o vía `gh run download`) — de ahí el `.ipa` va a SideStore en el iPhone, el `.apk` se manda directo a cualquier Android.
+
 ## Por qué el modelo de datos quedó así
 
 - **Una sola estructura de nota, no un sistema por plantilla.** Las plantillas rápidas ("examen", "duda", "tarea") son una nota limpia con campos pre-llenados (etiqueta + fecha_destacada opcional), no un tipo de dato distinto — evita construir un sistema paralelo por cada plantilla.

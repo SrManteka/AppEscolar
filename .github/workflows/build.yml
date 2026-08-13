@@ -1,0 +1,55 @@
+name: Build
+
+# Manual a proposito (workflow_dispatch) -- no en cada push. El build de iOS
+# corre en macos-latest; sale gratis e ilimitado por ser repo publico, pero
+# no tiene sentido gastarlo en cada commit mientras se sigue desarrollando.
+# Correr desde la pestana "Actions" del repo cuando de verdad se quiera una
+# build nueva para instalar/compartir. Ver docs/decisiones.md,
+# "Distribucion sin Mac y sin pagar".
+on:
+  workflow_dispatch:
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      # database.g.dart esta en .gitignore (es codigo generado) -- sin este
+      # paso el build falla porque falta el archivo 'part'.
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter test
+      - run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-escolar-android
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  ios-sin-firmar:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      # --no-codesign: sin esto, el build exige un Apple Developer Program
+      # de pago para firmar. El .ipa resultante se firma despues, en el
+      # propio iPhone, con SideStore y un Apple ID gratis -- no aqui.
+      - run: flutter build ios --release --no-codesign
+      # flutter build ios deja un Runner.app suelto, no un .ipa -- un .ipa
+      # es, literalmente, ese .app dentro de una carpeta Payload/, zipeado.
+      - name: Empaquetar Runner.app como .ipa sin firmar
+        run: |
+          mkdir -p build/ios/iphoneos/Payload
+          cp -r build/ios/iphoneos/Runner.app build/ios/iphoneos/Payload/
+          cd build/ios/iphoneos
+          zip -r app-escolar-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-escolar-ios-unsigned
+          path: build/ios/iphoneos/app-escolar-unsigned.ipa

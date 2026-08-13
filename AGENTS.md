@@ -58,6 +58,8 @@ Ver `docs/diseno.md` — sistema de color (`ColorScheme.fromSeed()`, Material 3,
 
 **Los cuatro pendientes organizados también están construidos** (ver `docs/decisiones.md`, "Pendientes organizados tras terminar fase 2", para el detalle de cada uno): gestión manual de semestres (pantalla "Semestres", incluye el ajuste de esquema `onDelete: cascade` en `materias.semestreId`), búsqueda/filtro de notas por texto, separación visual AppBar/cuerpo en Horario, y márgenes en la cuadrícula. Ver `git log` para el detalle de cada feature.
 
-**Siguiente paso:** pipeline de distribución (GitHub Actions para el `.ipa` sin firmar) y el tutorial de instalación para amigos — ver "Distribución (sin Mac, sin pagar)" arriba. Ninguno de los dos tiene trabajo empezado todavía.
+**Pipeline de distribución implementado** — `.github/workflows/build.yml` (manual, `workflow_dispatch`): job `android` compila `.apk`, job `ios-sin-firmar` compila `.ipa` sin firmar (`macos-latest`, gratis por ser repo público). Ver `docs/decisiones.md`, "Pipeline implementado", para el detalle de cada paso.
 
-<!-- TODO: actualizar esta sección conforme avance el pipeline de distribución -->
+**Siguiente paso:** correr el pipeline por primera vez, bajar los artifacts, e instalar — `.apk` directo en Android, `.ipa` vía SideStore en iPhone. El tutorial de instalación para amigos con SideStore sigue sin escribirse.
+
+<!-- TODO: actualizar esta sección conforme avance -->
