@@ -88,6 +88,7 @@ Sin campo de estado/checkbox — "pendiente" vs "vencida" se calcula comparando 
 | id | PK | |
 | proyecto_id | FK → proyecto | Un proyecto tiene uno o más hitos. |
 | titulo | texto | ej. "Entrega de hipótesis" |
+| texto | texto, opcional | Agregado 2026-08-12 — mismo motivo que en `tarea`: un título solo se queda corto para detalle (ej. "incluir bibliografía en formato APA"). |
 | fecha_hito | date, sin hora | Deliberadamente un campo distinto de `fecha_destacada` de nota, aunque el concepto sea similar — evitar confundirlos. |
 
 Sin checkboxes ni porcentaje de avance. Recordatorio implícito, igual que tarea: aviso al inicio del día de `fecha_hito`.
@@ -102,6 +103,8 @@ Sin checkboxes ni porcentaje de avance. Recordatorio implícito, igual que tarea
 | tarea_id | FK → tarea, nullable | Opcional. |
 
 **No tiene `proyecto_id` ni `hito_id`** — una foto relevante a un proyecto se asocia a la materia, no al proyecto directamente.
+
+**"Convertir en tarea" no migra fotos:** si una nota etiquetada "Tarea" con una foto adjunta (`nota_id`) se convierte en Tarea real, la foto se queda ligada a la nota original — no se re-liga sola a `tarea_id`. Decisión explícita, no un olvido: ver `decisiones.md`.
 
 Compresión al guardar: máx. ~1440px lado largo, JPEG ~75% → ~100-400 KB por foto.
 

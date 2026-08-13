@@ -84,6 +84,15 @@ Primer build funcional se sentía "tosco": bloques de clase con relleno sólido 
 
 Todo esto estuvo primero en el vault (`00 Ideas/(C) Diseño visual.md`) mientras se terminaba de pensar, a pedido explícito del usuario de no tocar el repo hasta cerrarlo ahí — se consolida aquí ahora que quedó confirmado.
 
+## Ajustes a fase 2 (Proyectos y Fotos) antes de construirlas (2026-08-12)
+
+Revisión de las especificaciones de Proyectos y Fotos contra lo aprendido construyendo la fase 1 — ninguna de las dos tenía código todavía, así que estos ajustes son a la especificación, no una migración:
+
+- **`hito` gana `texto` opcional**, igual que `tarea`. Cuando se le dio a Tarea un campo de texto porque un título solo se quedaba corto para detalle real, se detectó que `hito` tenía la misma limitación y nunca se corrigió — se agrega ahora, antes de construirse, para no repetir el mismo ciclo de "construir, usar, descubrir que falta, corregir" que pasó con Tarea.
+- **"Convertir en tarea" no migra fotos.** Si una nota etiquetada "Tarea" con una foto adjunta se convierte en Tarea real, la foto se queda ligada a la nota original, no se re-liga sola a la tarea nueva. Decisión explícita: consistente con "no gestora, no sobre-construir" — si el usuario quiere la foto también en la tarea, es una acción manual suya cuando Fotos exista, no algo que la app resuelva automáticamente.
+
+Con esto, `titulo` es consistente en las tres entidades "nombrables" del modelo (`nota`, `tarea`, `hito`) — todas lo requieren, ninguna se quedó corta respecto a las demás.
+
 ## Deadline y prioridad del MVP
 
 Ver `AGENTS.md` para el orden de prioridad completo. Razonamiento: 12 días (definido el 2026-08-09, deadline 24 de agosto) es un plazo real de riesgo para construir las 5 features completas desde cero, solo, con apoyo de IA. En vez de fijar "100% para el 24" como meta rígida (con riesgo de terminar apurado justo el día que más se necesita estable), se definió un MVP con orden de prioridad claro — Fotos y Proyectos quedan en fase 2 sin que eso cuente como no cumplir la meta.

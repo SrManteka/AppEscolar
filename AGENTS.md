@@ -54,6 +54,8 @@ Ver `docs/diseno.md` — sistema de color (`ColorScheme.fromSeed()`, Material 3,
 
 ## Estado actual
 
-Maqueta de ideas cerrada. Repo recién creado, sin código todavía — el siguiente paso es el scaffold de Flutter y empezar por Horario y clases (prioridad 1 del MVP).
+**MVP prioridades 1-4 construidas:** Horario y clases, Notas de clase, Tareas, Calendario + Recordatorios — con sistema de color y pulido visual de Horario ya implementados. Ver `git log` para el detalle de cada feature.
 
-<!-- TODO: actualizar esta sección conforme avance la construcción -->
+**Siguiente paso: fase 2 — Proyectos y Fotos** (prioridad 5, no bloqueaban el MVP). Antes de construirlas se revisó su especificación contra lo aprendido en fase 1 — ver `docs/decisiones.md`, "Ajustes a fase 2": `hito` ahora incluye `texto` opcional (igual que `tarea`), y quedó explícito que "convertir en tarea" no migra fotos automáticamente. Ninguna de las dos tiene tablas ni features en código todavía — arrancan desde cero, igual que las anteriores.
+
+<!-- TODO: actualizar esta sección conforme avance la construcción de fase 2 -->
