@@ -37,14 +37,27 @@ class HorarioGrid extends StatelessWidget {
             const SizedBox(width: 44),
             ...List.generate(diasGrid.length, (i) {
               final esHoy = diasGrid[i] == diaHoy;
+              final scheme = Theme.of(context).colorScheme;
+              // El dia actual se distingue con texto en negrita + una barra
+              // de acento debajo (patron tipo indicador de TabBar), no un
+              // relleno solido completo -- ese relleno competia en
+              // saturacion con el color de las materias en los bloques
+              // (ver docs/diseno.md, "Ajustes de pulido").
               return Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   alignment: Alignment.center,
-                  color: esHoy ? Theme.of(context).colorScheme.primaryContainer : null,
+                  decoration: esHoy
+                      ? BoxDecoration(
+                          border: Border(bottom: BorderSide(color: scheme.primary, width: 2)),
+                        )
+                      : null,
                   child: Text(
                     nombresDiaCorto[i],
-                    style: TextStyle(fontWeight: esHoy ? FontWeight.bold : FontWeight.normal),
+                    style: TextStyle(
+                      fontWeight: esHoy ? FontWeight.bold : FontWeight.normal,
+                      color: esHoy ? scheme.primary : null,
+                    ),
                   ),
                 ),
               );
@@ -134,8 +147,11 @@ class _ColumnaDia extends StatelessWidget {
     final minutosAhora = ahora.hour * 60 + ahora.minute;
 
     return Container(
+      // Sin borde vertical entre columnas de dia a proposito -- el
+      // espaciado y los headers ya separan los dias, y las lineas verticales
+      // sumadas a las horizontales hacian la cuadricula sentirse recargada
+      // (ver docs/diseno.md, "Ajustes de pulido").
       decoration: BoxDecoration(
-        border: Border(left: BorderSide(color: Theme.of(context).dividerColor)),
         color: esHoy
             ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.08)
             : null,
@@ -150,7 +166,10 @@ class _ColumnaDia extends StatelessWidget {
               child: Divider(
                 height: 1,
                 thickness: 0.5,
-                color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
+                // Opacidad baja (antes 0.3) -- la cuadricula debe sentirse
+                // como guia sutil, no compitiendo visualmente con el
+                // contenido.
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.15),
               ),
             ),
           for (final (materia, bloque) in bloquesDelDia)
@@ -188,33 +207,62 @@ class _BloqueClase extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final acento = MateriaAccent.of(context, materia);
+    // Patron "tonal container" de Material 3: fondo con tinte claro
+    // (acento.container) + franja de acento a saturacion completa pegada
+    // al borde -- no relleno solido uniforme, para que se sienta como
+    // tarjeta flotando y no como celda pintada (ver docs/diseno.md).
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        decoration: BoxDecoration(color: acento.container, borderRadius: BorderRadius.circular(6)),
-        padding: const EdgeInsets.all(4),
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.topLeft,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                materia.nombre,
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: acento.onContainer),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (materia.aula.isNotEmpty)
-                Text(
-                  materia.aula,
-                  style: TextStyle(fontSize: 10, color: acento.onContainer),
-                  overflow: TextOverflow.ellipsis,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: acento.container,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 3,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(width: 4, color: acento.acento),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(6, 4, 4, 4),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.topLeft,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        materia.nombre,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: acento.onContainer,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (materia.aula.isNotEmpty)
+                        Text(
+                          materia.aula,
+                          style: TextStyle(fontSize: 10, color: acento.onContainer),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
                 ),
-            ],
-          ),
+              ),
+            ),
+          ],
         ),
       ),
     );

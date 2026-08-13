@@ -18,14 +18,23 @@ Color materiaColorSeed(Materia materia) {
 class MateriaAccent {
   final Color container;
   final Color onContainer;
+  // Color de acento a saturacion completa (scheme.primary) -- para la
+  // franja lateral de los bloques de clase en el horario, no para fondos
+  // grandes de texto (ahi se usa `container`/`onContainer`, que ya vienen
+  // con el contraste resuelto).
+  final Color acento;
 
-  const MateriaAccent({required this.container, required this.onContainer});
+  const MateriaAccent({required this.container, required this.onContainer, required this.acento});
 
   factory MateriaAccent.of(BuildContext context, Materia materia) {
     final scheme = ColorScheme.fromSeed(
       seedColor: materiaColorSeed(materia),
       brightness: Theme.of(context).brightness,
     );
-    return MateriaAccent(container: scheme.primaryContainer, onContainer: scheme.onPrimaryContainer);
+    return MateriaAccent(
+      container: scheme.primaryContainer,
+      onContainer: scheme.onPrimaryContainer,
+      acento: scheme.primary,
+    );
   }
 }

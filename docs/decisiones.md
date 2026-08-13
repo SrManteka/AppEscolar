@@ -63,6 +63,27 @@ El usuario tiene iPhone propio (primer probador) y planea compartir con amigos (
 
 **El título de una nota se pre-llena con el nombre de la etiqueta elegida.** Antes, elegir la plantilla "Examen" seleccionaba la etiqueta pero dejaba el campo Título vacío — obligaba a escribir "Examen" a mano cuando ya era información implícita en la elección. Ahora se pre-llena automáticamente, pero **sigue siendo editable**: si el usuario cambia el texto, dejar de estar en el default evita que un cambio posterior de etiqueta se lo sobreescriba (se compara el texto actual contra el label de la etiqueta previa antes de decidir si actualizar). Esto evita el caso molesto de perder algo que el usuario ya escribió a mano, sin renunciar a la comodidad del relleno automático.
 
+## Tarea gana título y texto (2026-08-12)
+
+`tarea` se diseñó originalmente solo con `materia_id` + `fecha_entrega` — a propósito, el comentario original decía *"sin título a propósito, Teams es la fuente de verdad de qué es la entrega"*. En uso real esto resultó insuficiente: con 3 entregas distintas de la misma materia en 3 fechas distintas, no había forma de distinguirlas en la lista — el usuario terminó usando Notas (con la etiqueta "Tarea") como solución alterna, porque esa sí tenía título/texto/fecha completos.
+
+**Se agregó `titulo` (requerido en el formulario) y `texto` (opcional) a `tarea`**, igual que ya tenía `nota`. No reintroduce lo que se había descartado a propósito — sigue sin checkbox de "hecho", sigue sin prioridad, Teams sigue siendo la fuente de verdad de si se entregó. Solo se le da a la tarea la identidad que le faltaba para ser útil por sí sola, sin depender de una nota aparte.
+
+La etiqueta "Tarea" en Notas **se mantiene** — sigue sirviendo para capturar rápido "mencionaron una tarea en clase" sin saber todavía fecha/detalles exactos. El botón "convertir en tarea" ahora copia también `titulo`/`texto` de la nota, no solo la fecha — antes de este cambio esa información se perdía al convertir.
+
+Cambio de esquema (schemaVersion 5 → 6, columnas nuevas con default `''` para no romper migración de filas existentes) — las tareas de prueba creadas antes de este cambio quedan con título vacío tras migrar; la UI muestra `(sin título)` como fallback en ese caso.
+
+## Horario: pulido visual sobre build real (2026-08-12)
+
+Primer build funcional se sentía "tosco": bloques de clase con relleno sólido sin sombra ni suficiente redondeo, cuadrícula con líneas verticales y horizontales compitiendo visualmente con el contenido, resaltado del día actual como bloque sólido de color completo, y el indicador de clase actual/siguiente sin suficiente detalle visual pese a ya usar `Card`.
+
+- **Bloques de clase:** patrón "tonal container" real — fondo con el tono `container` del acento de la materia (ya se generaba vía `ColorScheme.fromSeed()`, pero se usaba como relleno uniforme) + una franja de 4px a color de acento completo (`scheme.primary`) pegada al borde izquierdo + sombra sutil + `BorderRadius` de 6 a 10px. La franja separa visualmente "el tinte de fondo" de "el color real de la materia", que antes se perdían en un solo bloque plano.
+- **Cuadrícula:** se quitaron las líneas verticales entre columnas de día (la separación ya la dan el espaciado y los headers) y se bajó la opacidad de las horizontales de 0.3 a 0.15 — deben leerse como guía sutil, no como contenido.
+- **Día actual:** de relleno sólido completo (`primaryContainer` cubriendo toda la celda del header) a texto en negrita + una barra de acento de 2px debajo, patrón tipo indicador de `TabBar` — evita competir en saturación con los bloques de clase, que ya usan el mismo tono de color para otra cosa.
+- **Banner de clase actual/siguiente:** se mantiene la posición (centrado arriba, flotante) a pedido explícito del usuario — no se convierte en tarjeta ancha anclada. Se le agregó ícono (reloj si es "siguiente", play si está "en curso"; luna si no hay más clases) y, cuando hay una clase, el mismo tinte derivado del color de la materia que usan los bloques del grid (antes usaba `colorScheme.primaryContainer` genérico, sin relación visual con la materia que describe).
+
+Todo esto estuvo primero en el vault (`00 Ideas/(C) Diseño visual.md`) mientras se terminaba de pensar, a pedido explícito del usuario de no tocar el repo hasta cerrarlo ahí — se consolida aquí ahora que quedó confirmado.
+
 ## Deadline y prioridad del MVP
 
 Ver `AGENTS.md` para el orden de prioridad completo. Razonamiento: 12 días (definido el 2026-08-09, deadline 24 de agosto) es un plazo real de riesgo para construir las 5 features completas desde cero, solo, con apoyo de IA. En vez de fijar "100% para el 24" como meta rígida (con riesgo de terminar apurado justo el día que más se necesita estable), se definió un MVP con orden de prioridad claro — Fotos y Proyectos quedan en fase 2 sin que eso cuente como no cumplir la meta.

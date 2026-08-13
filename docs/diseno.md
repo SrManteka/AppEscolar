@@ -27,6 +27,15 @@ Investigado el 2026-08-12 (apps de referencia + prácticas de theming en Flutter
 - **Clase actual/siguiente:** tarjeta elevada (`Card` de Material 3, no texto plano) — la jerarquía "esto es lo que importa ahora" debe notarse sin leer todo.
 - **Dentro de una materia (Notas/Tareas/Fotos):** `TabBar` estándar de Material — no inventar navegación custom para esto.
 
+## Ajustes de pulido — pantalla Horario (implementado 2026-08-12)
+
+Sobre el primer build funcional, que se sentía "tosco" (bloques sólidos sin sombra, cuadrícula recargada, día actual como bloque sólido, banner sin detalle). Razonamiento completo en `decisiones.md`, "Horario: pulido visual sobre build real".
+
+- **Bloques de clase:** patrón tonal container real — fondo `container` del acento de la materia + franja de 4px a color de acento completo (`scheme.primary`) en el borde izquierdo + sombra sutil + `BorderRadius.circular(10)`.
+- **Cuadrícula:** sin líneas verticales entre columnas de día; horizontales a opacidad 0.15 (antes 0.3).
+- **Día actual:** texto en negrita + barra de acento de 2px debajo (patrón indicador de `TabBar`), no relleno sólido completo.
+- **Banner de clase actual/siguiente:** posición conservada (centrado arriba, flotante) a pedido explícito del usuario — con ícono (reloj/play/luna según el estado) y tinte derivado del color de la materia, igual que los bloques del grid.
+
 ## Tipografía
 
 `google_fonts` — evita manejar archivos de fuente a mano, con más personalidad que la tipografía default de Material.
