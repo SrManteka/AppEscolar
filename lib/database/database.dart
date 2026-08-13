@@ -57,7 +57,19 @@ class Tareas extends Table {
       integer().nullable().references(Notas, #id, onDelete: KeyAction.setNull)();
 }
 
-@DriftDatabase(tables: [Semestres, Materias, HorarioBloques, Notas, Tareas])
+class Recordatorios extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  // Solo aplica a notas con fecha_destacada. Si se borra la nota, sus
+  // recordatorios se borran con ella (a diferencia de nota_origen_id en
+  // Tareas, que sobrevive) porque un recordatorio sin nota no tiene sentido.
+  IntColumn get notaId =>
+      integer().references(Notas, #id, onDelete: KeyAction.cascade)();
+  // Una nota puede tener varios recordatorios a la vez (ej. 60 y 180 min
+  // antes). Presets sugeridos en la UI: 15, 60, 180, 1440 (1 dia), o custom.
+  IntColumn get anticipacionMinutos => integer()();
+}
+
+@DriftDatabase(tables: [Semestres, Materias, HorarioBloques, Notas, Tareas, Recordatorios])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -65,7 +77,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -76,6 +88,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 3) {
         await m.createTable(tareas);
+      }
+      if (from < 4) {
+        await m.createTable(recordatorios);
       }
     },
   );
@@ -92,6 +107,71 @@ class AppDatabase extends _$AppDatabase {
       ..where((t) => t.materiaId.equals(materiaId))
       ..orderBy([(t) => OrderingTerm.asc(t.fechaEntrega)]);
     return query.watch();
+  }
+
+  Stream<List<Recordatorio>> watchRecordatorios(int notaId) {
+    final query = select(recordatorios)
+      ..where((r) => r.notaId.equals(notaId))
+      ..orderBy([(r) => OrderingTerm.asc(r.anticipacionMinutos)]);
+    return query.watch();
+  }
+
+  /// Notas con fecha_destacada del semestre (con su materia), para la vista
+  /// de calendario compartido. Se combina en la UI con [watchTareasSemestre].
+  Stream<List<NotaConMateria>> watchNotasDestacadas(int semestreId) {
+    final query = select(notas).join([
+      innerJoin(materias, materias.id.equalsExp(notas.materiaId)),
+    ])..where(materias.semestreId.equals(semestreId) & notas.fechaDestacada.isNotNull());
+    return query.watch().map(
+      (rows) => rows
+          .map((r) => NotaConMateria(nota: r.readTable(notas), materia: r.readTable(materias)))
+          .toList(),
+    );
+  }
+
+  /// Tareas del semestre (con su materia), para la vista de calendario
+  /// compartido. Se combina en la UI con [watchNotasDestacadas].
+  Stream<List<TareaConMateria>> watchTareasSemestre(int semestreId) {
+    final query = select(tareas).join([
+      innerJoin(materias, materias.id.equalsExp(tareas.materiaId)),
+    ])..where(materias.semestreId.equals(semestreId));
+    return query.watch().map(
+      (rows) => rows
+          .map((r) => TareaConMateria(tarea: r.readTable(tareas), materia: r.readTable(materias)))
+          .toList(),
+    );
+  }
+
+  /// Tareas de todas las materias (con nombre de materia) para reprogramar
+  /// sus recordatorios al iniciar la app.
+  Future<List<TareaConMateria>> tareasParaProgramar() async {
+    final rows = await (select(
+      tareas,
+    ).join([innerJoin(materias, materias.id.equalsExp(tareas.materiaId))])).get();
+    return rows
+        .map((r) => TareaConMateria(tarea: r.readTable(tareas), materia: r.readTable(materias)))
+        .toList();
+  }
+
+  /// Recordatorios de notas con fecha_destacada (con nota y materia) para
+  /// reprogramarlos al iniciar la app.
+  Future<List<RecordatorioConNota>> recordatoriosParaProgramar() async {
+    final rows =
+        await (select(recordatorios).join([
+              innerJoin(notas, notas.id.equalsExp(recordatorios.notaId)),
+              innerJoin(materias, materias.id.equalsExp(notas.materiaId)),
+            ])
+            ..where(notas.fechaDestacada.isNotNull()))
+            .get();
+    return rows
+        .map(
+          (r) => RecordatorioConNota(
+            recordatorio: r.readTable(recordatorios),
+            nota: r.readTable(notas),
+            materia: r.readTable(materias),
+          ),
+        )
+        .toList();
   }
 
   Future<int> semestreActivoId() async {
@@ -139,4 +219,26 @@ class MateriaConBloques {
   final List<HorarioBloque> bloques;
 
   MateriaConBloques({required this.materia, required this.bloques});
+}
+
+class NotaConMateria {
+  final Nota nota;
+  final Materia materia;
+
+  NotaConMateria({required this.nota, required this.materia});
+}
+
+class TareaConMateria {
+  final Tarea tarea;
+  final Materia materia;
+
+  TareaConMateria({required this.tarea, required this.materia});
+}
+
+class RecordatorioConNota {
+  final Recordatorio recordatorio;
+  final Nota nota;
+  final Materia materia;
+
+  RecordatorioConNota({required this.recordatorio, required this.nota, required this.materia});
 }

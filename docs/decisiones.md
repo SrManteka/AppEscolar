@@ -20,6 +20,16 @@ Comparado contra React Native, nativo doble (Swift+Kotlin), .NET MAUI y una PWA 
 
 **Nativo doble (Swift + Kotlin) se descartó para esta primera versión — no por incapacidad, sino por costo/beneficio.** Es objetivamente lo más robusto/performante que existe, pero duplica el trabajo y dos lenguajes nuevos a la vez para un alcance básico/intermedio. Queda anotado como posible proyecto futuro separado (ej. reconstruir la versión Android en Kotlin puro), no mezclado con este.
 
+## Entorno de desarrollo en Windows
+
+Windows se habilitó como plataforma de `flutter run` (ver AGENTS.md, no es plataforma de distribución) porque no hay Mac disponible de forma permanente y correr un binario nativo es mas rapido para iterar en UI que esperar un emulador Android en cada cambio. Esto requirió configuración de la máquina, documentada aquí porque no es obvia y le costaría tiempo a quien retome el proyecto:
+
+- **Modo desarrollador de Windows** (`Configuración > Privacidad y seguridad > Para desarrolladores`, o el registro `AllowDevelopmentWithoutDevLicense`) — Flutter lo requiere para crear symlinks al generar el proyecto de plataforma desktop (`flutter create --platforms=windows .`). Sin esto, el comando falla. Requiere reiniciar la sesión de Windows para que tome efecto.
+- **Visual Studio Build Tools 2022, workload "Desktop development with C++"** (`Microsoft.VisualStudio.Workload.VCTools`) — Flutter compila la parte nativa de la app de Windows (la carpeta `windows/runner`) con el toolchain de MSVC, no con algo que Flutter traiga incluido. Instalado con `winget install --id Microsoft.VisualStudio.2022.BuildTools -e --override "--wait --passive --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"`.
+- **Componente ATL** (`Microsoft.VisualStudio.Component.VC.ATL`) — no viene incluido en el workload de C++ por default. Se necesitó especificamente porque el plugin `flutter_local_notifications_windows` (agregado para las notificaciones locales del punto 4 del MVP) incluye código C++ que depende de `atlbase.h`; sin este componente el build falla con `C1083: Cannot open include file: 'atlbase.h'`. Instalado modificando la instalación existente: `vs_installer.exe modify --installPath "...\BuildTools" --add Microsoft.VisualStudio.Component.VC.ATL`. Esto requiere permisos de administrador (falla con el código 5007 "elevación requerida" si se corre como usuario normal).
+
+Ninguno de estos tres pasos afecta a Android/iOS ni a la distribución final — son exclusivamente para poder iterar más rápido en esta máquina de desarrollo.
+
 ## Por qué SQLite no es un problema de rendimiento
 
 Guardar varios semestres de materias/notas/tareas es trivial para SQLite (pocos miles de filas de texto a lo largo de una carrera completa). Lo único que realmente pesa son las fotos, y esas se guardan como archivos en disco, no en la base de datos — nunca como BLOB (eso sí generaría problemas reales: base de datos pesada, consultas lentas, respaldos grandes).

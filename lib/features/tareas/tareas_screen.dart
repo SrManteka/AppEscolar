@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 
 import '../../database/database.dart';
+import '../../notifications/notification_service.dart';
 import 'widgets/tarea_card.dart';
 import 'widgets/tarea_form_sheet.dart';
 
@@ -27,6 +28,7 @@ class TareasScreen extends StatelessWidget {
       ),
     );
     if (confirmar == true) {
+      await NotificationService.instance.cancelarTarea(tarea.id);
       await (db.delete(db.tareas)..whereSamePrimaryKey(tarea)).go();
     }
   }

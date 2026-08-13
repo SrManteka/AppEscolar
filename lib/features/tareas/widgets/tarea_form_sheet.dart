@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 
 import '../../../database/database.dart';
+import '../../../notifications/notification_service.dart';
 
 /// Bottom sheet para crear una tarea: solo materia (ya conocida) y fecha
 /// de entrega. Sin titulo a proposito -- Teams es la fuente de verdad de
@@ -64,12 +65,21 @@ class _TareaFormSheetState extends State<_TareaFormSheet> {
   }
 
   Future<void> _guardar() async {
-    await widget.db.into(widget.db.tareas).insert(
+    final materia = await (widget.db.select(
+      widget.db.materias,
+    )..where((m) => m.id.equals(widget.materiaId))).getSingle();
+
+    final tareaId = await widget.db.into(widget.db.tareas).insert(
       TareasCompanion.insert(
         materiaId: widget.materiaId,
         fechaEntrega: _fechaEntrega,
         notaOrigenId: Value(widget.notaOrigenId),
       ),
+    );
+    await NotificationService.instance.programarTarea(
+      tareaId: tareaId,
+      materiaNombre: materia.nombre,
+      fechaEntrega: _fechaEntrega,
     );
     if (mounted) Navigator.of(context).pop();
   }

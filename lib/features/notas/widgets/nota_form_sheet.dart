@@ -1,8 +1,24 @@
+import 'package:collection/collection.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 
 import '../../../database/database.dart';
+import '../../../notifications/notification_service.dart';
 import '../etiqueta_utils.dart';
+
+const _presetsAnticipacion = [15, 60, 180, 1440];
+
+String _etiquetaAnticipacion(int minutos) {
+  if (minutos >= 1440 && minutos % 1440 == 0) {
+    final dias = minutos ~/ 1440;
+    return dias == 1 ? '1 día antes' : '$dias días antes';
+  }
+  if (minutos >= 60 && minutos % 60 == 0) {
+    final horas = minutos ~/ 60;
+    return horas == 1 ? '1 hora antes' : '$horas horas antes';
+  }
+  return '$minutos min antes';
+}
 
 /// Bottom sheet para crear o editar una nota. Las "plantillas rápidas"
 /// (examen, duda, tarea mencionada) son solo esta misma nota con la
@@ -50,6 +66,7 @@ class _NotaFormSheetState extends State<_NotaFormSheet> {
 
   EtiquetaNota? _etiqueta;
   DateTime? _fechaDestacada;
+  final Set<int> _anticipaciones = {};
 
   @override
   void initState() {
@@ -59,6 +76,43 @@ class _NotaFormSheetState extends State<_NotaFormSheet> {
     _textoController = TextEditingController(text: existente?.texto ?? '');
     _etiqueta = existente?.etiqueta ?? widget.etiquetaInicial;
     _fechaDestacada = existente?.fechaDestacada;
+    if (existente != null) {
+      _cargarRecordatorios(existente.id);
+    }
+  }
+
+  Future<void> _cargarRecordatorios(int notaId) async {
+    final query = widget.db.select(widget.db.recordatorios)
+      ..where((r) => r.notaId.equals(notaId));
+    final filas = await query.get();
+    if (!mounted) return;
+    setState(() => _anticipaciones.addAll(filas.map((r) => r.anticipacionMinutos)));
+  }
+
+  Future<void> _agregarAnticipacionPersonalizada() async {
+    final controller = TextEditingController();
+    final minutos = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Recordatorio personalizado'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Minutos antes'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, int.tryParse(controller.text)),
+            child: const Text('Agregar'),
+          ),
+        ],
+      ),
+    );
+    if (minutos != null && minutos > 0) {
+      setState(() => _anticipaciones.add(minutos));
+    }
   }
 
   @override
@@ -91,22 +145,29 @@ class _NotaFormSheetState extends State<_NotaFormSheet> {
   Future<void> _guardar() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final titulo = _tituloController.text.trim();
+    final materia = await (widget.db.select(
+      widget.db.materias,
+    )..where((m) => m.id.equals(widget.materiaId))).getSingle();
+
+    int notaId;
     if (widget.notaExistente == null) {
-      await widget.db.into(widget.db.notas).insert(
+      notaId = await widget.db.into(widget.db.notas).insert(
         NotasCompanion.insert(
           materiaId: widget.materiaId,
-          titulo: _tituloController.text.trim(),
+          titulo: titulo,
           texto: Value(_textoController.text.trim()),
           etiqueta: Value(_etiqueta),
           fechaDestacada: Value(_fechaDestacada),
         ),
       );
     } else {
+      notaId = widget.notaExistente!.id;
       await (widget.db.update(widget.db.notas)
             ..whereSamePrimaryKey(widget.notaExistente!))
           .write(
         NotasCompanion(
-          titulo: Value(_tituloController.text.trim()),
+          titulo: Value(titulo),
           texto: Value(_textoController.text.trim()),
           etiqueta: Value(_etiqueta),
           fechaDestacada: Value(_fechaDestacada),
@@ -114,7 +175,45 @@ class _NotaFormSheetState extends State<_NotaFormSheet> {
       );
     }
 
+    await _sincronizarRecordatorios(notaId: notaId, materiaNombre: materia.nombre, notaTitulo: titulo);
+
     if (mounted) Navigator.of(context).pop();
+  }
+
+  /// Inserta/borra filas de `recordatorios` para que coincidan con
+  /// [_anticipaciones] y (re)programa o cancela sus notificaciones. Si no
+  /// hay fecha_destacada, no tiene sentido mantener ningun recordatorio.
+  Future<void> _sincronizarRecordatorios({
+    required int notaId,
+    required String materiaNombre,
+    required String notaTitulo,
+  }) async {
+    final existentes = await (widget.db.select(
+      widget.db.recordatorios,
+    )..where((r) => r.notaId.equals(notaId))).get();
+    final deseadas = _fechaDestacada == null ? const <int>{} : _anticipaciones;
+
+    for (final fila in existentes) {
+      if (!deseadas.contains(fila.anticipacionMinutos)) {
+        await NotificationService.instance.cancelarRecordatorioNota(fila.id);
+        await (widget.db.delete(widget.db.recordatorios)..whereSamePrimaryKey(fila)).go();
+      }
+    }
+
+    for (final minutos in deseadas) {
+      final existente = existentes.where((r) => r.anticipacionMinutos == minutos).firstOrNull;
+      final recordatorioId = existente?.id ??
+          await widget.db.into(widget.db.recordatorios).insert(
+            RecordatoriosCompanion.insert(notaId: notaId, anticipacionMinutos: minutos),
+          );
+      await NotificationService.instance.programarRecordatorioNota(
+        recordatorioId: recordatorioId,
+        materiaNombre: materiaNombre,
+        notaTitulo: notaTitulo,
+        fechaDestacada: _fechaDestacada!,
+        anticipacionMinutos: minutos,
+      );
+    }
   }
 
   @override
@@ -185,10 +284,46 @@ class _NotaFormSheetState extends State<_NotaFormSheet> {
                   if (_fechaDestacada != null)
                     IconButton(
                       icon: const Icon(Icons.close),
-                      onPressed: () => setState(() => _fechaDestacada = null),
+                      onPressed: () => setState(() {
+                        _fechaDestacada = null;
+                        _anticipaciones.clear();
+                      }),
                     ),
                 ],
               ),
+              if (_fechaDestacada != null) ...[
+                const SizedBox(height: 16),
+                Text('Recordatorios', style: Theme.of(context).textTheme.labelLarge),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final minutos in _presetsAnticipacion)
+                      FilterChip(
+                        label: Text(_etiquetaAnticipacion(minutos)),
+                        selected: _anticipaciones.contains(minutos),
+                        onSelected: (seleccionado) => setState(() {
+                          if (seleccionado) {
+                            _anticipaciones.add(minutos);
+                          } else {
+                            _anticipaciones.remove(minutos);
+                          }
+                        }),
+                      ),
+                    for (final minutos in _anticipaciones.where((m) => !_presetsAnticipacion.contains(m)))
+                      InputChip(
+                        label: Text(_etiquetaAnticipacion(minutos)),
+                        onDeleted: () => setState(() => _anticipaciones.remove(minutos)),
+                      ),
+                    ActionChip(
+                      avatar: const Icon(Icons.add, size: 18),
+                      label: const Text('Personalizado'),
+                      onPressed: _agregarAnticipacionPersonalizada,
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,

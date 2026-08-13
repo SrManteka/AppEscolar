@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../database/database.dart';
+import '../calendario/calendario_screen.dart';
 import 'clase_actual.dart';
 import 'widgets/clase_actual_banner.dart';
 import 'widgets/clase_form_sheet.dart';
@@ -38,7 +39,27 @@ class _HorarioScreenState extends State<HorarioScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Horario')),
+      appBar: AppBar(
+        title: const Text('Horario'),
+        actions: [
+          FutureBuilder<int>(
+            future: _semestreIdFuture,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const SizedBox.shrink();
+              final semestreId = snapshot.data!;
+              return IconButton(
+                icon: const Icon(Icons.event_note_outlined),
+                tooltip: 'Calendario',
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => CalendarioScreen(db: widget.db, semestreId: semestreId),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: FutureBuilder<int>(
         future: _semestreIdFuture,
         builder: (context, semestreSnapshot) {

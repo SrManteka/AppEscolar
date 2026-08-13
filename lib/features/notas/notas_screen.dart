@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 
 import '../../database/database.dart';
+import '../../notifications/notification_service.dart';
 import '../tareas/widgets/tarea_form_sheet.dart';
 import 'etiqueta_utils.dart';
 import 'widgets/nota_card.dart';
@@ -26,6 +27,15 @@ class NotasScreen extends StatelessWidget {
       ),
     );
     if (confirmar == true) {
+      // El borrado de `recordatorios` es en cascada por FK, pero los avisos
+      // ya agendados en el SO no se cancelan solos -- hay que hacerlo
+      // explicitamente antes de que las filas desaparezcan.
+      final recordatorios = await (db.select(
+        db.recordatorios,
+      )..where((r) => r.notaId.equals(nota.id))).get();
+      for (final r in recordatorios) {
+        await NotificationService.instance.cancelarRecordatorioNota(r.id);
+      }
       await (db.delete(db.notas)..whereSamePrimaryKey(nota)).go();
     }
   }
