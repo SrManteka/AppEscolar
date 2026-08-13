@@ -21,6 +21,11 @@ class Materias extends Table {
   TextColumn get nombre => text()();
   TextColumn get maestro => text().withDefault(const Constant(''))();
   TextColumn get aula => text().withDefault(const Constant(''))();
+  // Acento de color elegido por el usuario (Color.toARGB32()), de una
+  // paleta curada -- ver lib/theme/materia_color.dart. Nullable: materias
+  // creadas antes de este campo no tienen uno, la UI deriva un color
+  // deterministico de su id en ese caso.
+  IntColumn get color => integer().nullable()();
 }
 
 class HorarioBloques extends Table {
@@ -77,7 +82,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -91,6 +96,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 4) {
         await m.createTable(recordatorios);
+      }
+      if (from < 5) {
+        await m.addColumn(materias, materias.color);
       }
     },
   );

@@ -52,68 +52,61 @@ class NotasScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Notas · ${materia.nombre}')),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final e in EtiquetaNota.values)
-                  ActionChip(
-                    avatar: Icon(etiquetaIcon(e), size: 18),
-                    label: Text(etiquetaLabel(e)),
-                    onPressed: () => mostrarFormularioNota(
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final e in EtiquetaNota.values)
+                ActionChip(
+                  avatar: Icon(etiquetaIcon(e), size: 18),
+                  label: Text(etiquetaLabel(e)),
+                  onPressed: () => mostrarFormularioNota(
+                    context: context,
+                    db: db,
+                    materiaId: materia.id,
+                    etiquetaInicial: e,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+        Expanded(
+          child: StreamBuilder<List<Nota>>(
+            stream: db.watchNotas(materia.id),
+            builder: (context, snapshot) {
+              final notas = snapshot.data ?? [];
+              if (notas.isEmpty) {
+                return const _NotasVacio();
+              }
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: notas.length,
+                itemBuilder: (context, i) {
+                  final nota = notas[i];
+                  return NotaCard(
+                    nota: nota,
+                    onTap: () => mostrarFormularioNota(
                       context: context,
                       db: db,
                       materiaId: materia.id,
-                      etiquetaInicial: e,
+                      notaExistente: nota,
                     ),
-                  ),
-              ],
-            ),
+                    onEliminar: () => _eliminarNota(context, nota),
+                    onConvertirEnTarea: nota.etiqueta == EtiquetaNota.tareaMencionada
+                        ? () => _convertirEnTarea(context, nota)
+                        : null,
+                  );
+                },
+              );
+            },
           ),
-          const Divider(height: 1),
-          Expanded(
-            child: StreamBuilder<List<Nota>>(
-              stream: db.watchNotas(materia.id),
-              builder: (context, snapshot) {
-                final notas = snapshot.data ?? [];
-                if (notas.isEmpty) {
-                  return const _NotasVacio();
-                }
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: notas.length,
-                  itemBuilder: (context, i) {
-                    final nota = notas[i];
-                    return NotaCard(
-                      nota: nota,
-                      onTap: () => mostrarFormularioNota(
-                        context: context,
-                        db: db,
-                        materiaId: materia.id,
-                        notaExistente: nota,
-                      ),
-                      onEliminar: () => _eliminarNota(context, nota),
-                      onConvertirEnTarea: nota.etiqueta == EtiquetaNota.tareaMencionada
-                          ? () => _convertirEnTarea(context, nota)
-                          : null,
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => mostrarFormularioNota(context: context, db: db, materiaId: materia.id),
-        child: const Icon(Icons.add),
-      ),
+        ),
+      ],
     );
   }
 }

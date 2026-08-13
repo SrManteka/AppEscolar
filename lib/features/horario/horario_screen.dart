@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../database/database.dart';
+import '../../theme/app_settings.dart';
 import '../calendario/calendario_screen.dart';
+import '../settings/settings_screen.dart';
 import 'clase_actual.dart';
 import 'widgets/clase_actual_banner.dart';
 import 'widgets/clase_form_sheet.dart';
@@ -12,8 +14,9 @@ import 'widgets/materia_detail_sheet.dart';
 
 class HorarioScreen extends StatefulWidget {
   final AppDatabase db;
+  final AppSettings settings;
 
-  const HorarioScreen({super.key, required this.db});
+  const HorarioScreen({super.key, required this.db, required this.settings});
 
   @override
   State<HorarioScreen> createState() => _HorarioScreenState();
@@ -57,6 +60,13 @@ class _HorarioScreenState extends State<HorarioScreen> {
                 ),
               );
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.palette_outlined),
+            tooltip: 'Apariencia',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => SettingsScreen(settings: widget.settings)),
+            ),
           ),
         ],
       ),

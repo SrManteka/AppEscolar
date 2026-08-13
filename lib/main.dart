@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'database/database.dart';
 import 'features/horario/horario_screen.dart';
 import 'notifications/notification_service.dart';
+import 'theme/app_settings.dart';
 
-void main() {
-  runApp(AppEscolar(db: AppDatabase()));
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final settings = await AppSettings.load();
+  runApp(AppEscolar(db: AppDatabase(), settings: settings));
 }
 
 class AppEscolar extends StatefulWidget {
   final AppDatabase db;
+  final AppSettings settings;
 
-  const AppEscolar({super.key, required this.db});
+  const AppEscolar({super.key, required this.db, required this.settings});
 
   @override
   State<AppEscolar> createState() => _AppEscolarState();
@@ -58,10 +63,26 @@ class _AppEscolarState extends State<AppEscolar> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'AppEscolar',
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo)),
-      home: HorarioScreen(db: widget.db),
+    return ListenableBuilder(
+      listenable: widget.settings,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'AppEscolar',
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: widget.settings.seedColor),
+            textTheme: GoogleFonts.poppinsTextTheme(),
+          ),
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: widget.settings.seedColor,
+              brightness: Brightness.dark,
+            ),
+            textTheme: GoogleFonts.poppinsTextTheme(ThemeData(brightness: Brightness.dark).textTheme),
+          ),
+          themeMode: widget.settings.themeMode,
+          home: HorarioScreen(db: widget.db, settings: widget.settings),
+        );
+      },
     );
   }
 }

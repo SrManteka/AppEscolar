@@ -2,6 +2,8 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 
 import '../../../database/database.dart';
+import '../../../theme/app_colors.dart';
+import '../../../theme/materia_color_picker.dart';
 import '../hora_utils.dart';
 
 /// Bottom sheet para agregar una clase al horario: o bien una materia nueva
@@ -47,6 +49,7 @@ class _ClaseFormSheetState extends State<_ClaseFormSheet> {
 
   Materia? _materiaSeleccionada;
   bool _materiaNueva = true;
+  Color _colorSeleccionado = materiaColorPalette.first;
   DiaSemana _dia = DiaSemana.lunes;
   TimeOfDay _horaInicio = const TimeOfDay(hour: 7, minute: 0);
   TimeOfDay _horaFin = const TimeOfDay(hour: 8, minute: 0);
@@ -87,6 +90,7 @@ class _ClaseFormSheetState extends State<_ClaseFormSheet> {
           nombre: _nombreController.text.trim(),
           maestro: Value(_maestroController.text.trim()),
           aula: Value(_aulaController.text.trim()),
+          color: Value(_colorSeleccionado.toARGB32()),
         ),
       );
     } else {
@@ -149,6 +153,13 @@ class _ClaseFormSheetState extends State<_ClaseFormSheet> {
                 TextFormField(
                   controller: _aulaController,
                   decoration: const InputDecoration(labelText: 'Aula (opcional)'),
+                ),
+                const SizedBox(height: 16),
+                Text('Color', style: Theme.of(context).textTheme.labelLarge),
+                const SizedBox(height: 8),
+                MateriaColorPicker(
+                  seleccionado: _colorSeleccionado,
+                  onSeleccionar: (c) => setState(() => _colorSeleccionado = c),
                 ),
               ] else ...[
                 DropdownButtonFormField<Materia>(

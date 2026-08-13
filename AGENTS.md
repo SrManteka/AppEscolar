@@ -35,6 +35,10 @@ No se exige el 100% de las 5 features para esa fecha — Fotos y Proyectos puede
 
 Ver `docs/esquema.md` — entidades completas (semestre, materia, ponderacion, horario_bloque, nota, recordatorio, tarea, proyecto, hito, foto), campos, relaciones y por qué cada decisión quedó así.
 
+## Diseño visual
+
+Ver `docs/diseno.md` — sistema de color (`ColorScheme.fromSeed()`, Material 3, varias opciones de color semilla + claro/oscuro/sistema), patrones de pantalla y qué evitar. Investigado contra apps de referencia del mismo dominio (MyStudyLife), no improvisado.
+
 ## Distribución (sin Mac, sin pagar)
 
 1. Compilar `.ipa` sin firmar vía GitHub Actions (`macos-latest`, gratis e ilimitado por ser repo público): `flutter build ios --release --no-codesign`.

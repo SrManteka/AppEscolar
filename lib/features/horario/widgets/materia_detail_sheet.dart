@@ -2,9 +2,10 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 
 import '../../../database/database.dart';
-import '../../notas/notas_screen.dart';
-import '../../tareas/tareas_screen.dart';
+import '../../../theme/materia_color.dart';
+import '../../../theme/materia_color_picker.dart';
 import '../hora_utils.dart';
+import '../materia_screen.dart';
 
 Future<void> mostrarDetalleMateria({
   required BuildContext context,
@@ -33,6 +34,7 @@ class _MateriaDetailSheetState extends State<_MateriaDetailSheet> {
   late final TextEditingController _maestroController;
   late final TextEditingController _aulaController;
   bool _editando = false;
+  Color? _colorEdicion;
 
   @override
   void initState() {
@@ -56,6 +58,7 @@ class _MateriaDetailSheetState extends State<_MateriaDetailSheet> {
         nombre: Value(_nombreController.text.trim()),
         maestro: Value(_maestroController.text.trim()),
         aula: Value(_aulaController.text.trim()),
+        color: Value(_colorEdicion!.toARGB32()),
       ),
     );
     setState(() => _editando = false);
@@ -107,6 +110,7 @@ class _MateriaDetailSheetState extends State<_MateriaDetailSheet> {
           _nombreController.text = materia.nombre;
           _maestroController.text = materia.maestro;
           _aulaController.text = materia.aula;
+          _colorEdicion = materiaColorSeed(materia);
         }
 
         final bloquesQuery = widget.db.select(widget.db.horarioBloques)
@@ -140,6 +144,13 @@ class _MateriaDetailSheetState extends State<_MateriaDetailSheet> {
                     controller: _aulaController,
                     decoration: const InputDecoration(labelText: 'Aula'),
                   ),
+                  const SizedBox(height: 16),
+                  Text('Color', style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: 8),
+                  MateriaColorPicker(
+                    seleccionado: _colorEdicion!,
+                    onSeleccionar: (c) => setState(() => _colorEdicion = c),
+                  ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -157,6 +168,15 @@ class _MateriaDetailSheetState extends State<_MateriaDetailSheet> {
                 ] else ...[
                   Row(
                     children: [
+                      Container(
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: MateriaAccent.of(context, materia).container,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           materia.nombre,
@@ -176,38 +196,20 @@ class _MateriaDetailSheetState extends State<_MateriaDetailSheet> {
                   if (materia.maestro.isNotEmpty) Text(materia.maestro),
                   if (materia.aula.isNotEmpty) Text('Aula ${materia.aula}'),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: FilledButton.tonalIcon(
-                          icon: const Icon(Icons.note_alt_outlined),
-                          label: const Text('Ver notas'),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => NotasScreen(db: widget.db, materia: materia),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: FilledButton.tonalIcon(
-                          icon: const Icon(Icons.event_outlined),
-                          label: const Text('Ver tareas'),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => TareasScreen(db: widget.db, materia: materia),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.tonalIcon(
+                      icon: const Icon(Icons.menu_book_outlined),
+                      label: const Text('Ver materia'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => MateriaScreen(db: widget.db, materia: materia),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Text('Horarios', style: Theme.of(context).textTheme.labelLarge),

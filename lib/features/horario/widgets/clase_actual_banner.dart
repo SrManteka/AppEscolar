@@ -14,11 +14,13 @@ class ClaseActualBanner extends StatelessWidget {
     final clase = this.clase;
 
     if (clase == null) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
+      return Card(
+        margin: const EdgeInsets.all(12),
         color: theme.colorScheme.surfaceContainerHighest,
-        child: Text('Sin más clases hoy', style: theme.textTheme.bodyMedium),
+        child: const Padding(
+          padding: EdgeInsets.all(16),
+          child: Text('Sin más clases hoy'),
+        ),
       );
     }
 
@@ -29,23 +31,24 @@ class ClaseActualBanner extends StatelessWidget {
       if (materia.aula.isNotEmpty) 'Aula ${materia.aula}',
     ].join(' · ');
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      color: clase.enCurso
-          ? theme.colorScheme.primaryContainer
-          : theme.colorScheme.surfaceContainerHighest,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            clase.enCurso ? 'Clase actual' : 'Siguiente clase',
-            style: theme.textTheme.labelMedium,
-          ),
-          const SizedBox(height: 4),
-          Text(materia.nombre, style: theme.textTheme.titleLarge),
-          Text(detalle, style: theme.textTheme.bodyMedium),
-        ],
+    return Card(
+      margin: const EdgeInsets.all(12),
+      elevation: clase.enCurso ? 3 : 1,
+      color: clase.enCurso ? theme.colorScheme.primaryContainer : null,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              clase.enCurso ? 'Clase actual' : 'Siguiente clase',
+              style: theme.textTheme.labelMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(materia.nombre, style: theme.textTheme.titleLarge),
+            Text(detalle, style: theme.textTheme.bodyMedium),
+          ],
+        ),
       ),
     );
   }

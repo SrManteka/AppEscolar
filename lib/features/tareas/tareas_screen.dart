@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../../database/database.dart';
 import '../../notifications/notification_service.dart';
 import 'widgets/tarea_card.dart';
-import 'widgets/tarea_form_sheet.dart';
 
 class TareasScreen extends StatelessWidget {
   final AppDatabase db;
@@ -35,32 +34,22 @@ class TareasScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Tareas · ${materia.nombre}')),
-      body: StreamBuilder<List<Tarea>>(
-        stream: db.watchTareas(materia.id),
-        builder: (context, snapshot) {
-          final tareas = snapshot.data ?? [];
-          if (tareas.isEmpty) {
-            return const _TareasVacio();
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: tareas.length,
-            itemBuilder: (context, i) {
-              final tarea = tareas[i];
-              return TareaCard(
-                tarea: tarea,
-                onEliminar: () => _eliminarTarea(context, tarea),
-              );
-            },
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => mostrarFormularioTarea(context: context, db: db, materiaId: materia.id),
-        child: const Icon(Icons.add),
-      ),
+    return StreamBuilder<List<Tarea>>(
+      stream: db.watchTareas(materia.id),
+      builder: (context, snapshot) {
+        final tareas = snapshot.data ?? [];
+        if (tareas.isEmpty) {
+          return const _TareasVacio();
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          itemCount: tareas.length,
+          itemBuilder: (context, i) {
+            final tarea = tareas[i];
+            return TareaCard(tarea: tarea, onEliminar: () => _eliminarTarea(context, tarea));
+          },
+        );
+      },
     );
   }
 }

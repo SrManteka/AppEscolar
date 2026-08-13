@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../database/database.dart';
+import '../../../theme/materia_color.dart';
 import '../hora_utils.dart';
 
 const horaInicioGrid = 7;
@@ -186,32 +187,34 @@ class _BloqueClase extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final acento = MateriaAccent.of(context, materia);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.secondaryContainer,
-          borderRadius: BorderRadius.circular(6),
-        ),
+        decoration: BoxDecoration(color: acento.container, borderRadius: BorderRadius.circular(6)),
         padding: const EdgeInsets.all(4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              materia.nombre,
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (materia.aula.isNotEmpty)
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.topLeft,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
               Text(
-                materia.aula,
-                style: const TextStyle(fontSize: 10),
+                materia.nombre,
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: acento.onContainer),
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-          ],
+              if (materia.aula.isNotEmpty)
+                Text(
+                  materia.aula,
+                  style: TextStyle(fontSize: 10, color: acento.onContainer),
+                  overflow: TextOverflow.ellipsis,
+                ),
+            ],
+          ),
         ),
       ),
     );
