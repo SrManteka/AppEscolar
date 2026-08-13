@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import '../../database/database.dart';
 import '../notas/etiqueta_utils.dart';
 
-/// Segunda vista sobre el mismo dato de Notas y Tareas (no una
-/// reorganizacion): junta lo que ya existe por materia y lo ordena por
-/// fecha, para preguntas tipo "que exame tengo esta semana".
+/// Segunda vista sobre el mismo dato de Notas, Tareas e Hitos de proyecto
+/// (no una reorganizacion): junta lo que ya existe por materia y lo ordena
+/// por fecha, para preguntas tipo "que exame tengo esta semana".
 class CalendarioScreen extends StatelessWidget {
   final AppDatabase db;
   final int semestreId;
@@ -22,21 +22,28 @@ class CalendarioScreen extends StatelessWidget {
           return StreamBuilder<List<TareaConMateria>>(
             stream: db.watchTareasSemestre(semestreId),
             builder: (context, tareasSnapshot) {
-              final notas = notasSnapshot.data ?? [];
-              final tareas = tareasSnapshot.data ?? [];
-              final eventos = <_Evento>[
-                for (final n in notas) _Evento.nota(n),
-                for (final t in tareas) _Evento.tarea(t),
-              ]..sort((a, b) => a.fecha.compareTo(b.fecha));
+              return StreamBuilder<List<HitoConProyecto>>(
+                stream: db.watchHitosSemestre(semestreId),
+                builder: (context, hitosSnapshot) {
+                  final notas = notasSnapshot.data ?? [];
+                  final tareas = tareasSnapshot.data ?? [];
+                  final hitos = hitosSnapshot.data ?? [];
+                  final eventos = <_Evento>[
+                    for (final n in notas) _Evento.nota(n),
+                    for (final t in tareas) _Evento.tarea(t),
+                    for (final h in hitos) _Evento.hito(h),
+                  ]..sort((a, b) => a.fecha.compareTo(b.fecha));
 
-              if (eventos.isEmpty) {
-                return const _CalendarioVacio();
-              }
+                  if (eventos.isEmpty) {
+                    return const _CalendarioVacio();
+                  }
 
-              return ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: eventos.length,
-                itemBuilder: (context, i) => _EventoTile(evento: eventos[i]),
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: eventos.length,
+                    itemBuilder: (context, i) => _EventoTile(evento: eventos[i]),
+                  );
+                },
               );
             },
           );
@@ -52,7 +59,9 @@ class _Evento {
   final String materiaNombre;
   final String titulo;
   final IconData icono;
-  final bool esTarea;
+  // Notas (fecha_destacada) no "vencen" -- solo Tareas e Hitos, que
+  // comparten el mismo "estilo dia" de recordatorio (ver AGENTS.md).
+  final bool puedeVencer;
 
   _Evento({
     required this.fecha,
@@ -60,7 +69,7 @@ class _Evento {
     required this.materiaNombre,
     required this.titulo,
     required this.icono,
-    required this.esTarea,
+    required this.puedeVencer,
   });
 
   factory _Evento.nota(NotaConMateria n) => _Evento(
@@ -69,7 +78,7 @@ class _Evento {
     materiaNombre: n.materia.nombre,
     titulo: n.nota.titulo,
     icono: n.nota.etiqueta == null ? Icons.event_note_outlined : etiquetaIcon(n.nota.etiqueta!),
-    esTarea: false,
+    puedeVencer: false,
   );
 
   factory _Evento.tarea(TareaConMateria t) => _Evento(
@@ -78,7 +87,16 @@ class _Evento {
     materiaNombre: t.materia.nombre,
     titulo: 'Entrega',
     icono: Icons.event_outlined,
-    esTarea: true,
+    puedeVencer: true,
+  );
+
+  factory _Evento.hito(HitoConProyecto h) => _Evento(
+    fecha: h.hito.fechaHito,
+    incluyeHora: false,
+    materiaNombre: h.materia.nombre,
+    titulo: '${h.proyecto.nombre} · ${h.hito.titulo}',
+    icono: Icons.flag_outlined,
+    puedeVencer: true,
   );
 }
 
@@ -91,7 +109,7 @@ class _EventoTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final hoy = DateTime.now();
     final soloHoy = DateTime(hoy.year, hoy.month, hoy.day);
-    final vencida = evento.esTarea && evento.fecha.isBefore(soloHoy);
+    final vencida = evento.puedeVencer && evento.fecha.isBefore(soloHoy);
     final colorScheme = Theme.of(context).colorScheme;
 
     return Card(
@@ -121,7 +139,7 @@ class _CalendarioVacio extends StatelessWidget {
             const Text('Nada con fecha por ahora'),
             const SizedBox(height: 4),
             Text(
-              'Las notas con fecha destacada y las tareas aparecen aquí, ordenadas por fecha',
+              'Las notas con fecha destacada, tareas e hitos de proyecto aparecen aquí, ordenados por fecha',
               style: Theme.of(context).textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),

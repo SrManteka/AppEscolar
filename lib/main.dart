@@ -59,6 +59,16 @@ class _AppEscolarState extends State<AppEscolar> {
         anticipacionMinutos: r.recordatorio.anticipacionMinutos,
       );
     }
+
+    final hitos = await widget.db.hitosParaProgramar();
+    for (final h in hitos) {
+      await NotificationService.instance.programarHito(
+        hitoId: h.hito.id,
+        materiaNombre: h.materia.nombre,
+        proyectoNombre: h.proyecto.nombre,
+        fechaHito: h.hito.fechaHito,
+      );
+    }
   }
 
   @override

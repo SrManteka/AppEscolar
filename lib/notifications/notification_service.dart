@@ -77,6 +77,7 @@ class NotificationService {
 
   static int _idTarea(int tareaId) => 1000000 + tareaId;
   static int _idRecordatorio(int recordatorioId) => 2000000 + recordatorioId;
+  static int _idHito(int hitoId) => 3000000 + hitoId;
 
   NotificationDetails get _detalles => const NotificationDetails(
     android: AndroidNotificationDetails(
@@ -136,6 +137,31 @@ class NotificationService {
 
   Future<void> cancelarRecordatorioNota(int recordatorioId) =>
       _plugin.cancel(id: _idRecordatorio(recordatorioId));
+
+  /// Agenda (o reemplaza) el aviso fijo de un hito, a las 00:00 del dia de
+  /// `fechaHito` -- mismo "estilo dia" que Tareas. Si esa fecha ya paso, no
+  /// agenda nada.
+  Future<void> programarHito({
+    required int hitoId,
+    required String materiaNombre,
+    required String proyectoNombre,
+    required DateTime fechaHito,
+  }) async {
+    final fecha = DateTime(fechaHito.year, fechaHito.month, fechaHito.day);
+    final momento = tz.TZDateTime.from(fecha, tz.local);
+    if (!momento.isAfter(tz.TZDateTime.now(tz.local))) return;
+
+    await _plugin.zonedSchedule(
+      id: _idHito(hitoId),
+      title: 'Hito de proyecto',
+      body: '$materiaNombre · $proyectoNombre tiene un hito hoy',
+      scheduledDate: momento,
+      notificationDetails: _detalles,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+  }
+
+  Future<void> cancelarHito(int hitoId) => _plugin.cancel(id: _idHito(hitoId));
 }
 
 String _mensajeAnticipacion(int minutos) {

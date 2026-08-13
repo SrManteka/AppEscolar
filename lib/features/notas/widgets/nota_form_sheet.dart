@@ -3,6 +3,7 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 
 import '../../../database/database.dart';
+import '../../../fotos/widgets/fotos_adjuntas_section.dart';
 import '../../../notifications/notification_service.dart';
 import '../etiqueta_utils.dart';
 
@@ -343,6 +344,20 @@ class _NotaFormSheetState extends State<_NotaFormSheet> {
                       onPressed: _agregarAnticipacionPersonalizada,
                     ),
                   ],
+                ),
+              ],
+              if (widget.notaExistente != null) ...[
+                const SizedBox(height: 16),
+                FotosAdjuntasSection(
+                  db: widget.db,
+                  fotos: widget.db.watchFotosDeNota(widget.notaExistente!.id),
+                  onAgregar: (ruta) => widget.db.into(widget.db.fotos).insert(
+                    FotosCompanion.insert(
+                      materiaId: widget.materiaId,
+                      rutaArchivo: ruta,
+                      notaId: Value(widget.notaExistente!.id),
+                    ),
+                  ),
                 ),
               ],
               const SizedBox(height: 20),

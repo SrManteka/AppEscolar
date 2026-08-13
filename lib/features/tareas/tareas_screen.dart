@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../database/database.dart';
 import '../../notifications/notification_service.dart';
 import 'widgets/tarea_card.dart';
+import 'widgets/tarea_form_sheet.dart';
 
 class TareasScreen extends StatelessWidget {
   final AppDatabase db;
@@ -46,7 +47,16 @@ class TareasScreen extends StatelessWidget {
           itemCount: tareas.length,
           itemBuilder: (context, i) {
             final tarea = tareas[i];
-            return TareaCard(tarea: tarea, onEliminar: () => _eliminarTarea(context, tarea));
+            return TareaCard(
+              tarea: tarea,
+              onTap: () => mostrarFormularioTarea(
+                context: context,
+                db: db,
+                materiaId: materia.id,
+                tareaExistente: tarea,
+              ),
+              onEliminar: () => _eliminarTarea(context, tarea),
+            );
           },
         );
       },

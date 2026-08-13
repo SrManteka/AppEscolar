@@ -2,17 +2,20 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 
 import '../../../database/database.dart';
+import '../../../fotos/widgets/fotos_adjuntas_section.dart';
 import '../../../notifications/notification_service.dart';
 
-/// Bottom sheet para crear una tarea: materia (ya conocida), titulo, texto
-/// opcional, y fecha de entrega. Titulo existe para poder distinguir varias
-/// tareas de la misma materia entre si -- ver docs/decisiones.md. Sigue sin
-/// checkbox de "hecho": Teams sigue siendo la fuente de verdad de si se
-/// entrego, esto solo ayuda a recordar que existe y para cuando.
+/// Bottom sheet para crear o editar una tarea: materia (ya conocida),
+/// titulo, texto opcional, y fecha de entrega. Titulo existe para poder
+/// distinguir varias tareas de la misma materia entre si -- ver
+/// docs/decisiones.md. Sigue sin checkbox de "hecho": Teams sigue siendo la
+/// fuente de verdad de si se entrego, esto solo ayuda a recordar que existe
+/// y para cuando.
 Future<void> mostrarFormularioTarea({
   required BuildContext context,
   required AppDatabase db,
   required int materiaId,
+  Tarea? tareaExistente,
   DateTime? fechaInicial,
   int? notaOrigenId,
   String? tituloInicial,
@@ -24,6 +27,7 @@ Future<void> mostrarFormularioTarea({
     builder: (context) => _TareaFormSheet(
       db: db,
       materiaId: materiaId,
+      tareaExistente: tareaExistente,
       fechaInicial: fechaInicial,
       notaOrigenId: notaOrigenId,
       tituloInicial: tituloInicial,
@@ -35,6 +39,7 @@ Future<void> mostrarFormularioTarea({
 class _TareaFormSheet extends StatefulWidget {
   final AppDatabase db;
   final int materiaId;
+  final Tarea? tareaExistente;
   final DateTime? fechaInicial;
   final int? notaOrigenId;
   final String? tituloInicial;
@@ -43,6 +48,7 @@ class _TareaFormSheet extends StatefulWidget {
   const _TareaFormSheet({
     required this.db,
     required this.materiaId,
+    this.tareaExistente,
     this.fechaInicial,
     this.notaOrigenId,
     this.tituloInicial,
@@ -62,9 +68,10 @@ class _TareaFormSheetState extends State<_TareaFormSheet> {
   @override
   void initState() {
     super.initState();
-    _tituloController = TextEditingController(text: widget.tituloInicial ?? '');
-    _textoController = TextEditingController(text: widget.textoInicial ?? '');
-    final inicial = widget.fechaInicial ?? DateTime.now();
+    final existente = widget.tareaExistente;
+    _tituloController = TextEditingController(text: existente?.titulo ?? widget.tituloInicial ?? '');
+    _textoController = TextEditingController(text: existente?.texto ?? widget.textoInicial ?? '');
+    final inicial = existente?.fechaEntrega ?? widget.fechaInicial ?? DateTime.now();
     _fechaEntrega = DateTime(inicial.year, inicial.month, inicial.day);
   }
 
@@ -94,15 +101,32 @@ class _TareaFormSheetState extends State<_TareaFormSheet> {
       widget.db.materias,
     )..where((m) => m.id.equals(widget.materiaId))).getSingle();
 
-    final tareaId = await widget.db.into(widget.db.tareas).insert(
-      TareasCompanion.insert(
-        materiaId: widget.materiaId,
-        titulo: Value(titulo),
-        texto: Value(_textoController.text.trim()),
-        fechaEntrega: _fechaEntrega,
-        notaOrigenId: Value(widget.notaOrigenId),
-      ),
-    );
+    int tareaId;
+    if (widget.tareaExistente == null) {
+      tareaId = await widget.db.into(widget.db.tareas).insert(
+        TareasCompanion.insert(
+          materiaId: widget.materiaId,
+          titulo: Value(titulo),
+          texto: Value(_textoController.text.trim()),
+          fechaEntrega: _fechaEntrega,
+          notaOrigenId: Value(widget.notaOrigenId),
+        ),
+      );
+    } else {
+      tareaId = widget.tareaExistente!.id;
+      await (widget.db.update(widget.db.tareas)
+            ..whereSamePrimaryKey(widget.tareaExistente!))
+          .write(
+        TareasCompanion(
+          titulo: Value(titulo),
+          texto: Value(_textoController.text.trim()),
+          fechaEntrega: Value(_fechaEntrega),
+        ),
+      );
+    }
+    // Reprograma siempre (tambien al editar, por si cambio fechaEntrega) --
+    // el aviso fijo de tarea es idempotente, no hay que diferenciar
+    // creacion de edicion aqui.
     await NotificationService.instance.programarTarea(
       tareaId: tareaId,
       materiaNombre: materia.nombre,
@@ -127,13 +151,16 @@ class _TareaFormSheetState extends State<_TareaFormSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Nueva tarea', style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                widget.tareaExistente == null ? 'Nueva tarea' : 'Editar tarea',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _tituloController,
                 decoration: const InputDecoration(labelText: 'Título'),
                 validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
-                autofocus: true,
+                autofocus: widget.tareaExistente == null,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -149,6 +176,20 @@ class _TareaFormSheetState extends State<_TareaFormSheet> {
                   TextButton(onPressed: _elegirFecha, child: const Text('Cambiar')),
                 ],
               ),
+              if (widget.tareaExistente != null) ...[
+                const SizedBox(height: 16),
+                FotosAdjuntasSection(
+                  db: widget.db,
+                  fotos: widget.db.watchFotosDeTarea(widget.tareaExistente!.id),
+                  onAgregar: (ruta) => widget.db.into(widget.db.fotos).insert(
+                    FotosCompanion.insert(
+                      materiaId: widget.materiaId,
+                      rutaArchivo: ruta,
+                      tareaId: Value(widget.tareaExistente!.id),
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,

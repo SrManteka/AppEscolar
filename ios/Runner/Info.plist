@@ -26,6 +26,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Se usa la cámara para tomar fotos de tus notas de clase.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Se usa la galería para elegir fotos de tus notas de clase.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

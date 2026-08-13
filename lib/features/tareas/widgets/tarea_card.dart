@@ -4,9 +4,10 @@ import '../../../database/database.dart';
 
 class TareaCard extends StatelessWidget {
   final Tarea tarea;
+  final VoidCallback onTap;
   final VoidCallback onEliminar;
 
-  const TareaCard({super.key, required this.tarea, required this.onEliminar});
+  const TareaCard({super.key, required this.tarea, required this.onTap, required this.onEliminar});
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +24,7 @@ class TareaCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: ListTile(
+        onTap: onTap,
         leading: Icon(
           vencida ? Icons.event_busy : Icons.event_outlined,
           color: vencida ? colorScheme.error : colorScheme.primary,

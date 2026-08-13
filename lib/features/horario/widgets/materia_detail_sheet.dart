@@ -2,6 +2,8 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 
 import '../../../database/database.dart';
+import '../../../fotos/foto_storage.dart';
+import '../../../notifications/notification_service.dart';
 import '../../../theme/materia_color.dart';
 import '../../../theme/materia_color_picker.dart';
 import '../hora_utils.dart';
@@ -85,8 +87,51 @@ class _MateriaDetailSheetState extends State<_MateriaDetailSheet> {
       ),
     );
     if (confirmar == true) {
+      await _limpiarAvisosYArchivos(materia.id);
       await (widget.db.delete(widget.db.materias)..whereSamePrimaryKey(materia)).go();
       if (mounted) Navigator.of(context).pop();
+    }
+  }
+
+  /// El borrado de materia cascadea (por FK) a tareas, notas, recordatorios,
+  /// proyectos, hitos y fotos -- pero eso solo borra filas. Los avisos ya
+  /// agendados en el SO y los archivos de fotos en disco no se limpian
+  /// solos, hay que hacerlo antes de que las filas desaparezcan.
+  Future<void> _limpiarAvisosYArchivos(int materiaId) async {
+    final tareas = await (widget.db.select(
+      widget.db.tareas,
+    )..where((t) => t.materiaId.equals(materiaId))).get();
+    for (final t in tareas) {
+      await NotificationService.instance.cancelarTarea(t.id);
+    }
+
+    final notas = await (widget.db.select(
+      widget.db.notas,
+    )..where((n) => n.materiaId.equals(materiaId))).get();
+    for (final n in notas) {
+      final recordatorios = await (widget.db.select(
+        widget.db.recordatorios,
+      )..where((r) => r.notaId.equals(n.id))).get();
+      for (final r in recordatorios) {
+        await NotificationService.instance.cancelarRecordatorioNota(r.id);
+      }
+    }
+
+    final proyectos = await (widget.db.select(
+      widget.db.proyectos,
+    )..where((p) => p.materiaId.equals(materiaId))).get();
+    for (final p in proyectos) {
+      final hitos = await (widget.db.select(
+        widget.db.hitos,
+      )..where((h) => h.proyectoId.equals(p.id))).get();
+      for (final h in hitos) {
+        await NotificationService.instance.cancelarHito(h.id);
+      }
+    }
+
+    final rutasFotos = await widget.db.rutasFotosDeMateria(materiaId);
+    for (final ruta in rutasFotos) {
+      await FotoStorage.instance.borrar(ruta);
     }
   }
 

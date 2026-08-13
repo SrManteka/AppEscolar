@@ -80,7 +80,57 @@ class Recordatorios extends Table {
   IntColumn get anticipacionMinutos => integer()();
 }
 
-@DriftDatabase(tables: [Semestres, Materias, HorarioBloques, Notas, Tareas, Recordatorios])
+class Proyectos extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  // Exactamente una materia -- no hay proyectos transversales.
+  IntColumn get materiaId =>
+      integer().references(Materias, #id, onDelete: KeyAction.cascade)();
+  TextColumn get nombre => text()();
+  // Reemplaza tener un sub-sistema propio de notas/fotos para el proyecto.
+  TextColumn get especificaciones => text().withDefault(const Constant(''))();
+}
+
+class Hitos extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get proyectoId =>
+      integer().references(Proyectos, #id, onDelete: KeyAction.cascade)();
+  TextColumn get titulo => text()();
+  TextColumn get texto => text().withDefault(const Constant(''))();
+  // Solo fecha (sin hora), igual que tarea.fecha_entrega -- deliberadamente
+  // un campo distinto de nota.fecha_destacada aunque el concepto sea
+  // similar, para no confundirlos.
+  DateTimeColumn get fechaHito => dateTime()();
+}
+
+class Fotos extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  // Siempre obligatorio -- una foto relevante a un proyecto se asocia a la
+  // materia, no al proyecto directamente (no hay proyecto_id ni hito_id).
+  IntColumn get materiaId =>
+      integer().references(Materias, #id, onDelete: KeyAction.cascade)();
+  // Ruta en almacenamiento del dispositivo -- nunca BLOB en la base de datos.
+  TextColumn get rutaArchivo => text()();
+  // Si se borra la nota/tarea, la foto sobrevive sin vinculo (igual que
+  // nota_origen_id en Tareas) -- el archivo en disco no depende de eso.
+  IntColumn get notaId =>
+      integer().nullable().references(Notas, #id, onDelete: KeyAction.setNull)();
+  IntColumn get tareaId =>
+      integer().nullable().references(Tareas, #id, onDelete: KeyAction.setNull)();
+}
+
+@DriftDatabase(
+  tables: [
+    Semestres,
+    Materias,
+    HorarioBloques,
+    Notas,
+    Tareas,
+    Recordatorios,
+    Proyectos,
+    Hitos,
+    Fotos,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -88,7 +138,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -109,6 +159,11 @@ class AppDatabase extends _$AppDatabase {
       if (from < 6) {
         await m.addColumn(tareas, tareas.titulo);
         await m.addColumn(tareas, tareas.texto);
+      }
+      if (from < 7) {
+        await m.createTable(proyectos);
+        await m.createTable(hitos);
+        await m.createTable(fotos);
       }
     },
   );
@@ -192,6 +247,80 @@ class AppDatabase extends _$AppDatabase {
         .toList();
   }
 
+  Stream<List<Proyecto>> watchProyectos(int materiaId) {
+    final query = select(proyectos)..where((p) => p.materiaId.equals(materiaId));
+    return query.watch();
+  }
+
+  Stream<List<Hito>> watchHitos(int proyectoId) {
+    final query = select(hitos)
+      ..where((h) => h.proyectoId.equals(proyectoId))
+      ..orderBy([(h) => OrderingTerm.asc(h.fechaHito)]);
+    return query.watch();
+  }
+
+  /// Hitos del semestre (con su proyecto y materia), para la vista de
+  /// calendario compartido -- mismo "estilo dia" de recordatorio que Tareas.
+  Stream<List<HitoConProyecto>> watchHitosSemestre(int semestreId) {
+    final query = select(hitos).join([
+      innerJoin(proyectos, proyectos.id.equalsExp(hitos.proyectoId)),
+      innerJoin(materias, materias.id.equalsExp(proyectos.materiaId)),
+    ])..where(materias.semestreId.equals(semestreId));
+    return query.watch().map(
+      (rows) => rows
+          .map(
+            (r) => HitoConProyecto(
+              hito: r.readTable(hitos),
+              proyecto: r.readTable(proyectos),
+              materia: r.readTable(materias),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  /// Hitos de todos los proyectos (con su proyecto y materia) para
+  /// reprogramar sus recordatorios al iniciar la app.
+  Future<List<HitoConProyecto>> hitosParaProgramar() async {
+    final rows =
+        await (select(hitos).join([
+          innerJoin(proyectos, proyectos.id.equalsExp(hitos.proyectoId)),
+          innerJoin(materias, materias.id.equalsExp(proyectos.materiaId)),
+        ])).get();
+    return rows
+        .map(
+          (r) => HitoConProyecto(
+            hito: r.readTable(hitos),
+            proyecto: r.readTable(proyectos),
+            materia: r.readTable(materias),
+          ),
+        )
+        .toList();
+  }
+
+  Stream<List<Foto>> watchFotos(int materiaId) {
+    final query = select(fotos)..where((f) => f.materiaId.equals(materiaId));
+    return query.watch();
+  }
+
+  Stream<List<Foto>> watchFotosDeNota(int notaId) {
+    final query = select(fotos)..where((f) => f.notaId.equals(notaId));
+    return query.watch();
+  }
+
+  Stream<List<Foto>> watchFotosDeTarea(int tareaId) {
+    final query = select(fotos)..where((f) => f.tareaId.equals(tareaId));
+    return query.watch();
+  }
+
+  /// Rutas de todas las fotos de una materia -- para borrar los archivos en
+  /// disco antes de eliminar la materia (el borrado en cascada de la fila
+  /// no borra el archivo solo).
+  Future<List<String>> rutasFotosDeMateria(int materiaId) async {
+    final filas = await (select(fotos)..where((f) => f.materiaId.equals(materiaId))).get();
+    return filas.map((f) => f.rutaArchivo).toList();
+  }
+
   Future<int> semestreActivoId() async {
     final existente = await (select(
       semestres,
@@ -259,4 +388,12 @@ class RecordatorioConNota {
   final Materia materia;
 
   RecordatorioConNota({required this.recordatorio, required this.nota, required this.materia});
+}
+
+class HitoConProyecto {
+  final Hito hito;
+  final Proyecto proyecto;
+  final Materia materia;
+
+  HitoConProyecto({required this.hito, required this.proyecto, required this.materia});
 }
