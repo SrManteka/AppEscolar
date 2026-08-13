@@ -17,7 +17,11 @@ class Semestres extends Table {
 
 class Materias extends Table {
   IntColumn get id => integer().autoIncrement()();
-  IntColumn get semestreId => integer().references(Semestres, #id)();
+  // Agregado en schemaVersion 8: sin cascade, borrar un semestre con
+  // materias fallaba (SQLite bloquea el borrado por la FK). Ver
+  // docs/decisiones.md, "Pendientes organizados" -- gestion de semestres.
+  IntColumn get semestreId =>
+      integer().references(Semestres, #id, onDelete: KeyAction.cascade)();
   TextColumn get nombre => text()();
   TextColumn get maestro => text().withDefault(const Constant(''))();
   TextColumn get aula => text().withDefault(const Constant(''))();
@@ -138,7 +142,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -164,6 +168,12 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(proyectos);
         await m.createTable(hitos);
         await m.createTable(fotos);
+      }
+      if (from < 8) {
+        // SQLite no permite alterar una FK existente in-place -- alterTable
+        // recrea la tabla completa a partir de la definicion actual (que ya
+        // tiene onDelete: cascade) y copia los datos.
+        await m.alterTable(TableMigration(materias));
       }
     },
   );
@@ -330,6 +340,116 @@ class AppDatabase extends _$AppDatabase {
     return into(semestres).insert(
       SemestresCompanion.insert(nombre: 'Semestre actual', activo: const Value(true)),
     );
+  }
+
+  /// Todos los semestres, activo primero y luego el resto (archivados) por
+  /// id descendente (mas reciente primero).
+  Stream<List<Semestre>> watchSemestres() {
+    final query = select(semestres)
+      ..orderBy([(s) => OrderingTerm.desc(s.activo), (s) => OrderingTerm.desc(s.id)]);
+    return query.watch();
+  }
+
+  /// Archiva el semestre activo actual (activo = false, sin tocar sus
+  /// datos) y crea uno nuevo, activo, con el nombre dado.
+  Future<int> crearNuevoSemestre(String nombre) {
+    return transaction(() async {
+      await (update(
+        semestres,
+      )..where((s) => s.activo.equals(true))).write(const SemestresCompanion(activo: Value(false)));
+      return into(
+        semestres,
+      ).insert(SemestresCompanion.insert(nombre: nombre, activo: const Value(true)));
+    });
+  }
+
+  Future<List<Materia>> materiasDeSemestre(int semestreId) {
+    return (select(materias)..where((m) => m.semestreId.equals(semestreId))).get();
+  }
+
+  /// Estructura completa (sin archivos de fotos, solo sus rutas como
+  /// metadata) de un semestre, lista para `jsonEncode`. Ver
+  /// docs/decisiones.md, "Gestion manual de semestres".
+  Future<Map<String, dynamic>> exportarSemestre(int semestreId) async {
+    final semestre = await (select(
+      semestres,
+    )..where((s) => s.id.equals(semestreId))).getSingle();
+    final materiasDelSemestre = await materiasDeSemestre(semestreId);
+
+    final materiasJson = <Map<String, dynamic>>[];
+    for (final materia in materiasDelSemestre) {
+      final bloques = await (select(
+        horarioBloques,
+      )..where((b) => b.materiaId.equals(materia.id))).get();
+      final notasDeMateria = await (select(
+        notas,
+      )..where((n) => n.materiaId.equals(materia.id))).get();
+      final tareasDeMateria = await (select(
+        tareas,
+      )..where((t) => t.materiaId.equals(materia.id))).get();
+      final proyectosDeMateria = await (select(
+        proyectos,
+      )..where((p) => p.materiaId.equals(materia.id))).get();
+      final fotosDeMateria = await (select(
+        fotos,
+      )..where((f) => f.materiaId.equals(materia.id))).get();
+
+      final proyectosJson = <Map<String, dynamic>>[];
+      for (final proyecto in proyectosDeMateria) {
+        final hitosDelProyecto = await (select(
+          hitos,
+        )..where((h) => h.proyectoId.equals(proyecto.id))).get();
+        proyectosJson.add({
+          'nombre': proyecto.nombre,
+          'especificaciones': proyecto.especificaciones,
+          'hitos': [
+            for (final h in hitosDelProyecto)
+              {'titulo': h.titulo, 'texto': h.texto, 'fechaHito': h.fechaHito.toIso8601String()},
+          ],
+        });
+      }
+
+      materiasJson.add({
+        'nombre': materia.nombre,
+        'maestro': materia.maestro,
+        'aula': materia.aula,
+        'horario': [
+          for (final b in bloques)
+            {
+              'diaSemana': b.diaSemana.name,
+              'horaInicioMinutos': b.horaInicioMinutos,
+              'horaFinMinutos': b.horaFinMinutos,
+            },
+        ],
+        'notas': [
+          for (final n in notasDeMateria)
+            {
+              'titulo': n.titulo,
+              'texto': n.texto,
+              'etiqueta': n.etiqueta?.name,
+              'fechaDestacada': n.fechaDestacada?.toIso8601String(),
+            },
+        ],
+        'tareas': [
+          for (final t in tareasDeMateria)
+            {
+              'titulo': t.titulo,
+              'texto': t.texto,
+              'fechaEntrega': t.fechaEntrega.toIso8601String(),
+            },
+        ],
+        'proyectos': proyectosJson,
+        // Solo metadata -- los archivos de fotos no se incluyen en el
+        // export, es un respaldo mayor a resolver despues si hace falta.
+        'fotos': [for (final f in fotosDeMateria) {'rutaArchivo': f.rutaArchivo}],
+      });
+    }
+
+    return {
+      'semestre': semestre.nombre,
+      'exportadoEn': DateTime.now().toIso8601String(),
+      'materias': materiasJson,
+    };
   }
 
   Stream<List<MateriaConBloques>> watchHorario(int semestreId) {

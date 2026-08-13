@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../database/database.dart';
 import '../../theme/app_settings.dart';
 import '../calendario/calendario_screen.dart';
+import '../semestres/semestres_screen.dart';
 import '../settings/settings_screen.dart';
 import 'clase_actual.dart';
 import 'widgets/clase_actual_banner.dart';
@@ -23,7 +24,7 @@ class HorarioScreen extends StatefulWidget {
 }
 
 class _HorarioScreenState extends State<HorarioScreen> {
-  late final Future<int> _semestreIdFuture;
+  late Future<int> _semestreIdFuture;
   Timer? _refrescoMinuto;
 
   @override
@@ -39,11 +40,24 @@ class _HorarioScreenState extends State<HorarioScreen> {
     super.dispose();
   }
 
+  /// El semestre activo puede haber cambiado en la pantalla de Semestres
+  /// (un "Nuevo semestre" archiva el actual y activa uno distinto).
+  Future<void> _abrirSemestres() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => SemestresScreen(db: widget.db)),
+    );
+    setState(() => _semestreIdFuture = widget.db.semestreActivoId());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Horario'),
+        // Separacion visual del cuerpo -- sin esto el AppBar se funde con
+        // la cuadricula, mismo tono de superficie (ver docs/decisiones.md,
+        // "Pendientes organizados").
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
         actions: [
           FutureBuilder<int>(
             future: _semestreIdFuture,
@@ -60,6 +74,11 @@ class _HorarioScreenState extends State<HorarioScreen> {
                 ),
               );
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.school_outlined),
+            tooltip: 'Semestres',
+            onPressed: _abrirSemestres,
           ),
           IconButton(
             icon: const Icon(Icons.palette_outlined),

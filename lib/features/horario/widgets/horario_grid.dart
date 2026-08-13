@@ -30,66 +30,72 @@ class HorarioGrid extends StatelessWidget {
     final ahora = DateTime.now();
     final diaHoy = DiaSemana.values[ahora.weekday - 1];
 
-    return Column(
-      children: [
-        Row(
-          children: [
-            const SizedBox(width: 44),
-            ...List.generate(diasGrid.length, (i) {
-              final esHoy = diasGrid[i] == diaHoy;
-              final scheme = Theme.of(context).colorScheme;
-              // El dia actual se distingue con texto en negrita + una barra
-              // de acento debajo (patron tipo indicador de TabBar), no un
-              // relleno solido completo -- ese relleno competia en
-              // saturacion con el color de las materias en los bloques
-              // (ver docs/diseno.md, "Ajustes de pulido").
-              return Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  alignment: Alignment.center,
-                  decoration: esHoy
-                      ? BoxDecoration(
-                          border: Border(bottom: BorderSide(color: scheme.primary, width: 2)),
-                        )
-                      : null,
-                  child: Text(
-                    nombresDiaCorto[i],
-                    style: TextStyle(
-                      fontWeight: esHoy ? FontWeight.bold : FontWeight.normal,
-                      color: esHoy ? scheme.primary : null,
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ],
-        ),
-        Expanded(
-          child: SingleChildScrollView(
-            child: SizedBox(
-              height: _alturaTotal,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _ColumnaHoras(alturaTotal: _alturaTotal),
-                  ...List.generate(
-                    diasGrid.length,
-                    (i) => Expanded(
-                      child: _ColumnaDia(
-                        dia: diasGrid[i],
-                        esHoy: diasGrid[i] == diaHoy,
-                        ahora: ahora,
-                        materias: materias,
-                        onTapBloque: onTapBloque,
+    // Margen horizontal para que la cuadricula no quede pegada a los bordes
+    // de la pantalla -- separa del borde, no achica fuentes ni bloques (ver
+    // docs/decisiones.md, "Pendientes organizados").
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const SizedBox(width: 44),
+              ...List.generate(diasGrid.length, (i) {
+                final esHoy = diasGrid[i] == diaHoy;
+                final scheme = Theme.of(context).colorScheme;
+                // El dia actual se distingue con texto en negrita + una barra
+                // de acento debajo (patron tipo indicador de TabBar), no un
+                // relleno solido completo -- ese relleno competia en
+                // saturacion con el color de las materias en los bloques
+                // (ver docs/diseno.md, "Ajustes de pulido").
+                return Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    alignment: Alignment.center,
+                    decoration: esHoy
+                        ? BoxDecoration(
+                            border: Border(bottom: BorderSide(color: scheme.primary, width: 2)),
+                          )
+                        : null,
+                    child: Text(
+                      nombresDiaCorto[i],
+                      style: TextStyle(
+                        fontWeight: esHoy ? FontWeight.bold : FontWeight.normal,
+                        color: esHoy ? scheme.primary : null,
                       ),
                     ),
                   ),
-                ],
+                );
+              }),
+            ],
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: SizedBox(
+                height: _alturaTotal,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _ColumnaHoras(alturaTotal: _alturaTotal),
+                    ...List.generate(
+                      diasGrid.length,
+                      (i) => Expanded(
+                        child: _ColumnaDia(
+                          dia: diasGrid[i],
+                          esHoy: diasGrid[i] == diaHoy,
+                          ahora: ahora,
+                          materias: materias,
+                          onTapBloque: onTapBloque,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

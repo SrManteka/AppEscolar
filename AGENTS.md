@@ -54,15 +54,10 @@ Ver `docs/diseno.md` — sistema de color (`ColorScheme.fromSeed()`, Material 3,
 
 ## Estado actual
 
-**MVP completo: prioridades 1-5 construidas** — Horario y clases, Notas de clase, Tareas, Calendario + Recordatorios, Proyectos + Fotos. Sistema de color, tipografía (`google_fonts`) y pulido visual de Horario implementados. Ver `git log` para el detalle de cada feature.
+**MVP completo: prioridades 1-5 construidas** — Horario y clases, Notas de clase, Tareas, Calendario + Recordatorios, Proyectos + Fotos. Sistema de color, tipografía (`google_fonts`) y pulido visual de Horario implementados.
 
-**Siguiente paso: cuatro pendientes organizados, ninguno construido todavía** — ver `docs/decisiones.md`, "Pendientes organizados tras terminar fase 2", para el detalle completo de cada uno:
+**Los cuatro pendientes organizados también están construidos** (ver `docs/decisiones.md`, "Pendientes organizados tras terminar fase 2", para el detalle de cada uno): gestión manual de semestres (pantalla "Semestres", incluye el ajuste de esquema `onDelete: cascade` en `materias.semestreId`), búsqueda/filtro de notas por texto, separación visual AppBar/cuerpo en Horario, y márgenes en la cuadrícula. Ver `git log` para el detalle de cada feature.
 
-1. Gestión manual de semestres (pantalla "Semestres": nuevo/archivar, exportar JSON, borrar — incluye un ajuste de esquema pendiente, `onDelete: cascade` en `materias.semestreId`).
-2. Búsqueda/filtro de notas por texto dentro de una materia.
-3. Separación visual entre el AppBar y el cuerpo en Horario.
-4. Márgenes en la cuadrícula de Horario (sin reducir tamaños).
+**Siguiente paso:** pipeline de distribución (GitHub Actions para el `.ipa` sin firmar) y el tutorial de instalación para amigos — ver "Distribución (sin Mac, sin pagar)" arriba. Ninguno de los dos tiene trabajo empezado todavía.
 
-**Después de estos cuatro:** pipeline de distribución (GitHub Actions para el `.ipa` sin firmar) y el tutorial de instalación para amigos — ver "Distribución (sin Mac, sin pagar)" arriba.
-
-<!-- TODO: actualizar esta sección conforme avance la construcción de fase 2 -->
+<!-- TODO: actualizar esta sección conforme avance el pipeline de distribución -->
