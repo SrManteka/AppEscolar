@@ -63,6 +63,18 @@ Los artifacts se descargan desde la página del run en GitHub Actions (o vía `g
 
 **Primera corrida real (2026-08-13): iOS pasó, Android falló.** `flutter build apk --release` falló en `:app:checkReleaseAarMetadata` — `flutter_local_notifications` requiere "core library desugaring" habilitado, y `android/app/build.gradle.kts` no lo tenía. Nunca se había detectado antes porque el desarrollo local solo corrió `flutter run -d windows` — el pipeline fue la primera vez que se ejercitó de verdad el build de release de Android. Arreglado agregando `isCoreLibraryDesugaringEnabled = true` en `compileOptions` y la dependencia `coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")`.
 
+## Tutorial de instalación en iPhone, expandido tras usarlo de verdad (2026-08-13)
+
+La primera versión de `docs/instalacion.md` (basada en investigación, no en la experiencia real) resumía SideStore en 6 pasos genéricos. El usuario lo instaló de verdad y confirmó que fue tedioso — el resumen corto se saltaba pasos reales que sí hay que hacer, no opcionales:
+
+- **Modo Desarrollador** (`Ajustes → Privacidad y Seguridad → Modo Desarrollador`, iOS 16+) — no aparece en Ajustes hasta que el sistema lo necesita, fácil de no encontrar si no se sabe que existe.
+- **Pairing file en Windows** (`jitterbugpair`, línea de comandos) — paso técnico real, no cosmético.
+- **iTunes debe ser el de Apple directo, no el de Microsoft Store** — gotcha específico de Windows.
+- **Servidor Anisette** — la pieza más confusa conceptualmente; normalmente no requiere acción (viene preconfigurado), pero si la firma falla sin explicación, es el primer lugar a revisar. Servidores públicos sobrecargados pueden generar bloqueos de Apple ID — hay una [lista de alternativos](https://github.com/SideStore/anisette-servers) de la comunidad.
+- **Confiar el certificado** (`Ajustes → General → VPN y Gestión de Dispositivos`) — ya estaba documentado, se mantiene.
+
+`docs/instalacion.md` se reescribió con estos 9 pasos explícitos en vez de 6 genéricos. Sin capturas de pantalla reales (no hay forma de generarlas sin un iPhone/SideStore real) — texto detallado con rutas exactas de menú en su lugar.
+
 ## Nombre e ícono de la app (2026-08-13)
 
 **El nombre visible en los dispositivos es "NotesFS" — el repo (`AppEscolar`) y el nombre del paquete (`app_escolar` en `pubspec.yaml`) no cambian.** Son cosas distintas a propósito: el repo es donde vive el código y es lo que se muestra como evidencia de portafolio; "NotesFS" es solo lo que aparece bajo el ícono en el celular. Cambiar el nombre del paquete habría sido un cambio más invasivo (afecta identificadores internos de Android/iOS) sin necesidad real — el objetivo era solo la etiqueta visible.
