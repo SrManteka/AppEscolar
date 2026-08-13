@@ -67,8 +67,10 @@ Mecanismo: `flutter_local_notifications`, notificaciones locales, sin push/backe
 |---|---|---|
 | id | PK | |
 | materia_id | FK → materia | No se asocia a un `horario_bloque` específico. |
+| titulo | texto | Agregado en schemaVersion 6 — sin esto, dos tareas de la misma materia con fechas distintas eran indistinguibles. Default `''` (migración), requerido en el formulario. |
+| texto | texto, opcional | Agregado junto con `titulo`, mismo motivo. |
 | fecha_entrega | date, sin hora | A propósito — capturar hora es impredecible y no aporta. |
-| nota_origen_id | FK → nota, nullable | Se llena si se creó vía el botón "convertir en tarea" desde una nota "tarea mencionada". |
+| nota_origen_id | FK → nota, nullable | Se llena si se creó vía el botón "convertir en tarea" desde una nota "tarea" — también copia `titulo`/`texto` de la nota. |
 
 Sin campo de estado/checkbox — "pendiente" vs "vencida" se calcula comparando `fecha_entrega` contra hoy, no se almacena. Recordatorio implícito: un aviso al inicio del día de `fecha_entrega` (00:00), no configurable.
 

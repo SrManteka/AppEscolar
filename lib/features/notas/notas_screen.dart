@@ -47,6 +47,10 @@ class NotasScreen extends StatelessWidget {
       materiaId: nota.materiaId,
       fechaInicial: nota.fechaDestacada,
       notaOrigenId: nota.id,
+      // La tarea hereda titulo/texto de la nota -- antes de que Tarea
+      // tuviera estos campos, "convertir en tarea" perdia esa informacion.
+      tituloInicial: nota.titulo,
+      textoInicial: nota.texto,
     );
   }
 

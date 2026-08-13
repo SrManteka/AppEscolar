@@ -15,6 +15,11 @@ class TareaCard extends StatelessWidget {
     final vencida = tarea.fechaEntrega.isBefore(soloHoy);
     final colorScheme = Theme.of(context).colorScheme;
 
+    // Filas creadas antes de que titulo existiera (schemaVersion < 6)
+    // quedan con '' tras la migracion -- se les muestra un fallback en vez
+    // de un titulo en blanco.
+    final titulo = tarea.titulo.trim().isEmpty ? '(sin título)' : tarea.titulo;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: ListTile(
@@ -22,8 +27,13 @@ class TareaCard extends StatelessWidget {
           vencida ? Icons.event_busy : Icons.event_outlined,
           color: vencida ? colorScheme.error : colorScheme.primary,
         ),
-        title: Text('Entrega: ${_formatFecha(tarea.fechaEntrega)}'),
-        subtitle: Text(vencida ? 'Vencida' : 'Pendiente'),
+        title: Text(titulo),
+        subtitle: Text(
+          [
+            if (tarea.texto.trim().isNotEmpty) tarea.texto.trim(),
+            '${vencida ? 'Vencida' : 'Entrega'}: ${_formatFecha(tarea.fechaEntrega)}',
+          ].join(' · '),
+        ),
         trailing: IconButton(
           icon: const Icon(Icons.delete_outline),
           onPressed: onEliminar,

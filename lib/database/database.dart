@@ -52,6 +52,12 @@ class Tareas extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get materiaId =>
       integer().references(Materias, #id, onDelete: KeyAction.cascade)();
+  // Agregado en schemaVersion 6: sin esto, dos tareas de la misma materia
+  // con fechas distintas eran indistinguibles en la lista -- ver
+  // docs/decisiones.md. Default '' para que la migracion de filas viejas
+  // no falle; el formulario exige titulo no vacio para filas nuevas.
+  TextColumn get titulo => text().withDefault(const Constant(''))();
+  TextColumn get texto => text().withDefault(const Constant(''))();
   // Solo fecha (sin hora) a proposito: capturar hora de entrega es
   // impredecible y no aporta. Se guarda con hora en 00:00.
   DateTimeColumn get fechaEntrega => dateTime()();
@@ -82,7 +88,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -99,6 +105,10 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 5) {
         await m.addColumn(materias, materias.color);
+      }
+      if (from < 6) {
+        await m.addColumn(tareas, tareas.titulo);
+        await m.addColumn(tareas, tareas.texto);
       }
     },
   );
