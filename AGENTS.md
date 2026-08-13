@@ -62,12 +62,12 @@ Ver `docs/diseno.md` — sistema de color (`ColorScheme.fromSeed()`, Material 3,
 
 **Pipeline de distribución implementado** — `.github/workflows/build.yml` (manual, `workflow_dispatch`): job `android` compila `.apk`, job `ios-sin-firmar` compila `.ipa` sin firmar (`macos-latest`, gratis por ser repo público). Ver `docs/decisiones.md`, "Pipeline implementado", para el detalle de cada paso.
 
-**Nombre e ícono configurados** — la app se llama "NotesFS" en los dispositivos (el repo y el nombre del paquete `app_escolar` NO cambiaron, es solo la etiqueta visible). Ícono fuente en `assets/icon/app_icon.png`, falta correr `dart run flutter_launcher_icons` (después de `flutter pub get`) para generar los assets reales de Android/iOS — ver `docs/decisiones.md`, "Nombre e ícono de la app".
+**Nombre e ícono configurados y generados** — la app se llama "NotesFS" en los dispositivos (el repo y el nombre del paquete `app_escolar` NO cambiaron, es solo la etiqueta visible; confirmado en el título de ventana de un build local en Windows). Ícono fuente en `assets/icon/app_icon.png`; `dart run flutter_launcher_icons` ya corrió y generó los assets reales de Android/iOS en todas las resoluciones — ver `docs/decisiones.md`, "Nombre e ícono de la app".
 
 **Ya no bloqueado:** el bloqueo de facturación de la cuenta de GitHub se resolvió el 2026-08-13 — el pipeline corre normal.
 
 **Tutoriales escritos:** `docs/publicar-nueva-version.md` (runbook mecánico de cómo sacar una build y compartirla) y `docs/instalacion.md` (guía para amigos, Android + iPhone/SideStore, sin tecnicismos).
 
-**Siguiente paso, en orden:** (1) correr `dart run flutter_launcher_icons` para generar los íconos reales (pendiente, requiere Flutter local), (2) bajar los artifacts de la corrida más reciente del pipeline, (3) instalar y probar en dispositivos reales siguiendo `docs/instalacion.md`.
+**Siguiente paso, en orden:** (1) correr el pipeline (con los íconos ya generados) y bajar los artifacts, (2) instalar y probar en dispositivos reales siguiendo `docs/instalacion.md`.
 
 <!-- TODO: actualizar esta sección conforme avance -->
