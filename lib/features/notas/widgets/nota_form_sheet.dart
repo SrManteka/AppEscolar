@@ -72,13 +72,34 @@ class _NotaFormSheetState extends State<_NotaFormSheet> {
   void initState() {
     super.initState();
     final existente = widget.notaExistente;
-    _tituloController = TextEditingController(text: existente?.titulo ?? '');
-    _textoController = TextEditingController(text: existente?.texto ?? '');
     _etiqueta = existente?.etiqueta ?? widget.etiquetaInicial;
+    // Si se abre desde una plantilla rápida (o ya tiene etiqueta al editar)
+    // y el título viene vacío, se pre-llena con el nombre de la etiqueta --
+    // sigue siendo editable, solo evita re-escribir algo que ya se sabe
+    // (ej. una nota de "Examen" ya se llama "Examen" salvo que se cambie).
+    _tituloController = TextEditingController(
+      text: existente?.titulo ?? (_etiqueta != null ? etiquetaLabel(_etiqueta!) : ''),
+    );
+    _textoController = TextEditingController(text: existente?.texto ?? '');
     _fechaDestacada = existente?.fechaDestacada;
     if (existente != null) {
       _cargarRecordatorios(existente.id);
     }
+  }
+
+  /// Cambia la etiqueta seleccionada y, si el título todavía es el default
+  /// de la etiqueta anterior (o está vacío), lo actualiza al nuevo default.
+  /// Si el usuario ya escribió algo distinto, no se lo pisa -- el auto-
+  /// relleno es solo un punto de partida, nunca fuerza el texto.
+  void _seleccionarEtiqueta(EtiquetaNota? nueva) {
+    setState(() {
+      final tituloActual = _tituloController.text.trim();
+      final eraDefaultAnterior = _etiqueta != null && tituloActual == etiquetaLabel(_etiqueta!);
+      _etiqueta = nueva;
+      if (nueva != null && (tituloActual.isEmpty || eraDefaultAnterior)) {
+        _tituloController.text = etiquetaLabel(nueva);
+      }
+    });
   }
 
   Future<void> _cargarRecordatorios(int notaId) async {
@@ -257,13 +278,13 @@ class _NotaFormSheetState extends State<_NotaFormSheet> {
                   ChoiceChip(
                     label: const Text('Ninguna'),
                     selected: _etiqueta == null,
-                    onSelected: (_) => setState(() => _etiqueta = null),
+                    onSelected: (_) => _seleccionarEtiqueta(null),
                   ),
                   for (final e in EtiquetaNota.values)
                     ChoiceChip(
                       label: Text(etiquetaLabel(e)),
                       selected: _etiqueta == e,
-                      onSelected: (_) => setState(() => _etiqueta = e),
+                      onSelected: (_) => _seleccionarEtiqueta(e),
                     ),
                 ],
               ),

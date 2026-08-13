@@ -50,12 +50,18 @@ El usuario tiene iPhone propio (primer probador) y planea compartir con amigos (
 
 ## Por qué el modelo de datos quedó así
 
-- **Una sola estructura de nota, no un sistema por plantilla.** Las plantillas rápidas ("fecha de examen", "duda", "tarea mencionada") son una nota limpia con campos pre-llenados (etiqueta + fecha_destacada opcional), no un tipo de dato distinto — evita construir un sistema paralelo por cada plantilla.
+- **Una sola estructura de nota, no un sistema por plantilla.** Las plantillas rápidas ("examen", "duda", "tarea") son una nota limpia con campos pre-llenados (etiqueta + fecha_destacada opcional), no un tipo de dato distinto — evita construir un sistema paralelo por cada plantilla.
 - **Dos vistas del mismo dato (por materia + calendario compartido), no reorganización.** Las notas/tareas se organizan por materia (para no perder el orden), pero verlas todas juntas por fecha (ej. "qué exámenes tengo esta semana") es una segunda vista sobre el mismo dato, no una duplicación.
 - **`fecha_destacada` (Notas) y `fecha_hito` (Proyectos) son campos deliberadamente distintos**, aunque el concepto sea similar. `fecha_destacada` incluye hora (recordatorios con anticipación personalizable, tipo "1 hora antes"). `fecha_hito` y la fecha de entrega de Tareas solo tienen día (recordatorio fijo: aviso a las 00:00 del día) — capturar hora en una entrega escolar es impredecible y no aporta. Usar el mismo nombre de campo para ambos habría sido una fuente de confusión al implementar.
 - **Proyectos no tiene su propio sub-sistema de notas/fotos** ("una materia en miniatura") — se consideró y se descartó por complicar el modelo sin necesidad, dado que la app no es gestora. En su lugar, un campo de texto libre ("especificaciones") cubre el caso de uso real.
 - **Ponderaciones es puramente informativo** — se evaluó agregar cálculo de calificación real (capturar calificaciones + calcular promedio ponderado) y se descartó por ahora: alcance nuevo real que no se pidió, mantiene la app simple.
 - **Notificaciones son locales, no push** — no requieren servidor ni certificados de Apple Push Notification, 100% compatibles con "sin backend". Advertencia real (no bloqueante): algunos Android (Xiaomi, Huawei y similares) matan avisos programados si la app no está exenta de optimización de batería — es del fabricante, documentado para explicarlo si algún día un aviso no suena.
+
+## Ajustes a Notas tras usar la app real (2026-08-12)
+
+**Etiqueta "tarea mencionada" renombrada a "tarea".** El nombre original venía de cómo se pensó la feature en abstracto (una nota que *menciona* una tarea, distinta de la Tarea real). En uso real, con la pestaña Tareas ya visible al lado de Notas en la misma pantalla, "Tarea mencionada" se sentía redundante/confuso en vez de clarificador. Se simplifica a "Tarea" — el comportamiento no cambia (sigue siendo solo una etiqueta de nota, sigue habilitando el botón "convertir en tarea", sigue sin ser un tipo de dato distinto). El valor interno del enum (`EtiquetaNota.tarea`, antes `tareaMencionada`) se renombró en el mismo índice de la lista — no requiere migración de base de datos, los datos ya guardados se leen igual.
+
+**El título de una nota se pre-llena con el nombre de la etiqueta elegida.** Antes, elegir la plantilla "Examen" seleccionaba la etiqueta pero dejaba el campo Título vacío — obligaba a escribir "Examen" a mano cuando ya era información implícita en la elección. Ahora se pre-llena automáticamente, pero **sigue siendo editable**: si el usuario cambia el texto, dejar de estar en el default evita que un cambio posterior de etiqueta se lo sobreescriba (se compara el texto actual contra el label de la etiqueta previa antes de decidir si actualizar). Esto evita el caso molesto de perder algo que el usuario ya escribió a mano, sin renunciar a la comodidad del relleno automático.
 
 ## Deadline y prioridad del MVP
 
