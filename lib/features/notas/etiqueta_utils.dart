@@ -8,8 +8,8 @@ String etiquetaLabel(EtiquetaNota etiqueta) {
       return 'Examen';
     case EtiquetaNota.duda:
       return 'Duda';
-    case EtiquetaNota.tareaMencionada:
-      return 'Tarea mencionada';
+    case EtiquetaNota.tarea:
+      return 'Tarea';
   }
 }
 
@@ -19,7 +19,7 @@ IconData etiquetaIcon(EtiquetaNota etiqueta) {
       return Icons.school_outlined;
     case EtiquetaNota.duda:
       return Icons.help_outline;
-    case EtiquetaNota.tareaMencionada:
+    case EtiquetaNota.tarea:
       return Icons.assignment_outlined;
   }
 }

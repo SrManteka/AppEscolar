@@ -48,7 +48,7 @@ Vista principal: cuadrícula 7:00-21:00 (solo rango de visualización, no restri
 | materia_id | FK → materia | |
 | titulo | texto | |
 | texto | texto libre | |
-| etiqueta | texto, nullable | `examen` / `duda` / `tarea-mencionada` / null (nota limpia) — es solo un atajo de creación, no un tipo de dato distinto. |
+| etiqueta | texto, nullable | `examen` / `duda` / `tarea` / null (nota limpia) — es solo un atajo de creación, no un tipo de dato distinto. Al elegir una etiqueta, el título se pre-llena con su nombre (editable) — ver `decisiones.md`. |
 | fecha_destacada | datetime, nullable | Incluye hora (a diferencia de tareas/hitos) — necesaria para recordatorios estilo 1. |
 
 ### `recordatorio`

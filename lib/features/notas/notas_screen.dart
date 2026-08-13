@@ -97,7 +97,7 @@ class NotasScreen extends StatelessWidget {
                       notaExistente: nota,
                     ),
                     onEliminar: () => _eliminarNota(context, nota),
-                    onConvertirEnTarea: nota.etiqueta == EtiquetaNota.tareaMencionada
+                    onConvertirEnTarea: nota.etiqueta == EtiquetaNota.tarea
                         ? () => _convertirEnTarea(context, nota)
                         : null,
                   );

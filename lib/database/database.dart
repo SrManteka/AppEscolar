@@ -7,7 +7,7 @@ part 'database.g.dart';
 
 enum DiaSemana { lunes, martes, miercoles, jueves, viernes, sabado, domingo }
 
-enum EtiquetaNota { examen, duda, tareaMencionada }
+enum EtiquetaNota { examen, duda, tarea }
 
 class Semestres extends Table {
   IntColumn get id => integer().autoIncrement()();
